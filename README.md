@@ -1,35 +1,35 @@
-=== LinkList ===
-Contributors: Lutz Schroeer
-Tags: links
-Requires at least: 2.7
-Tested up to: 3.7
-Stable tag: trunk
-Author: Lutz Schroeer
-Version: 0.3
-Author URI: http://elektroelch.de/blog/
-License: GPL
+# LinkList
 
-== Description ==
+* Contributors: Lutz Schroeer
+* Tags: links
+* Requires at least: 2.7
+* Tested up to: 3.7
+* Stable tag: trunk
+* Author: Lutz Schroeer
+* Version: 0.3
+* Author URI: http://elektroelch.de/blog/
+* License: GPL
+
+## Description
 
 LinkList adds a list of mentioned links at the end of the post, page or feed.
 
-== Installation ==
+## Installation
 
 1. Download the plugin and unzip it.
 2. Upload the folder changelogger/ to your /wp-content/plugins/ folder.
 3. Activate the plugin from your WordPress admin panel.
 4. Installation finished.
 
-
-== Settings ==
+## Settings
 LinkList provides a varitey of settings to tweak the list to your needs. The settings are
 devided into three parts (posts, pages and feeds).
 
-= General settings =
+### General settings 
 Here you can define if the linklist should be display on posts, pages and/or feeds at all.
 
 
-= Posts settings =
+### Posts settings 
 * Content to put in front of list
 Text to be displayed in front of the linklist
 
@@ -74,7 +74,7 @@ This list will contain all links of the post. If the list is displayed at the en
 part are displayed. The settings of "Minimum links" applies to every part separately.
 
 
-= Pages settings =
+### Pages settings 
 
 * Content to put in front of list
 Text to be displayed in front of the linklist
@@ -114,7 +114,7 @@ This list will contain all links of the post. If the list is displayed at the en
 part are displayed. The settings of "Minimum links" applies to every part separately.
 
 
-= Feed settings =
+### Feed settings 
 * Content to put in front of list
 Text to be displayed in front of the linklist
 
@@ -147,7 +147,7 @@ Minimum number of links mentioned in the post for the list to be displayed.
 Sort the links alphabetically. This function has an issue with international characters (e.g.
 German umlauts).
 
-= Styling LinkList =
+### Styling LinkList 
 You can style the link list with CSS:
 
 <div class="linklist">
@@ -156,7 +156,7 @@ You can style the link list with CSS:
   </span>
 </div>
 
-= Filter =
+### Filter 
 You can programmatically change the content of the linklist by adding a filter:
 
 <?php
@@ -166,18 +166,17 @@ You can programmatically change the content of the linklist by adding a filter:
     [...]
   }
 
-
-== Credits ==
+## Credits
 * Joost de Valk (Yoast) for his plugin tools (yst_plugin_tools.php). http://yoast.com/
 
-      
-== Changelog ==
-= v0.3 =
+## Changelog
+### v0.3 
 * Fixed "Strict standards" notice in PHP 5.5
 * Checked for 3.7 compatibility
 
-= v0.2 =
+### v0.2 
 + Added: filter for link list (11 SEP 2012)
 
-= v0.1 =
+### v0.1 
 Initial release (15 AUG 2009)
+
