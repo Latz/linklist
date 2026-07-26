@@ -1,0 +1,21 @@
+{
+	"name": "linklist",
+	"private": true,
+	"version": "0.6.0",
+	"scripts": {
+		"build": "wp-scripts build",
+		"start": "wp-scripts start",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"devDependencies": {
+		"@testing-library/jest-dom": "^7.0.0",
+		"@testing-library/react": "^16.3.2",
+		"@testing-library/user-event": "^14.6.1",
+		"@vitejs/plugin-react": "^4.7.0",
+		"@wordpress/scripts": "^30.0.0",
+		"jquery": "^4.0.0",
+		"jsdom": "^29.1.1",
+		"vitest": "^4.1.10"
+	}
+}

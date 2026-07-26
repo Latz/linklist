@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "linklist/linklist",
+  "title": "Link List",
+  "category": "widgets",
+  "icon": "admin-links",
+  "description": "Renders the list of links mentioned in this post/page at this position.",
+  "textdomain": "linklist",
+  "attributes": {
+    "style": {
+      "type": "string",
+      "default": ""
+    },
+    "prolog": {
+      "type": "string",
+      "default": ""
+    },
+    "sep": {
+      "type": "string",
+      "default": ""
+    },
+    "sort": {
+      "type": "string",
+      "default": ""
+    },
+    "minlinks": {
+      "type": "number",
+      "default": -1
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "editorScript": "file:./index.js"
+}
