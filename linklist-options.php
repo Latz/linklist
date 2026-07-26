@@ -3,12 +3,21 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 	class LinkList_Admin {
 
-		var $hook 		= 'linklist';
-		var $longname	= 'LinkList Configuration';
-		var $shortname	= 'LinkList';
-		var $filename	= 'linklist/linklist.php';
+		const LABEL_PROLOG        = 'Content to put in front of list';
+		const LABEL_STYLE         = 'Style of list';
+		const LABEL_STYLE_OL      = 'ordered list';
+		const LABEL_STYLE_UL      = 'unordered list';
+		const LABEL_STYLE_SEP     = 'char separated';
+		const LABEL_MINLINKS      = 'Minimum links';
+		const DESC_MINLINKS       = 'Minimum number of links to display LinkList';
+		const LABEL_SORT          = 'Sort links alphabetically';
 
-		function __construct() {
+		public $hook 		= 'linklist';
+		public $longname	= 'LinkList Configuration';
+		public $shortname	= 'LinkList';
+		public $filename	= 'linklist/linklist.php';
+
+		public function __construct() {
 			add_action( 'admin_menu', array( &$this, 'register_settings_page' ) );
 			add_filter( 'plugin_action_links', array( &$this, 'add_action_link' ), 10, 2 );
 
@@ -16,20 +25,22 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 			add_action( 'admin_print_styles', array( &$this, 'config_page_styles' ) );
 		}
 
-		function register_settings_page() {
+		public function register_settings_page() {
 			add_options_page( $this->longname, $this->shortname, 'manage_options', $this->hook, array( &$this, 'config_page' ) );
 		}
 
-		function plugin_options_url() {
+		public function plugin_options_url() {
 			return admin_url( 'options-general.php?page=' . $this->hook );
 		}
 
 		/**
 		 * Add a link to the settings page to the plugins list
 		 */
-		function add_action_link( $links, $file ) {
+		public function add_action_link( $links, $file ) {
 			static $this_plugin;
-			if ( empty( $this_plugin ) ) $this_plugin = $this->filename;
+			if ( empty( $this_plugin ) ) {
+				$this_plugin = $this->filename;
+			}
 			if ( $file == $this_plugin ) {
 				$settings_link = '<a href="' . $this->plugin_options_url() . '">' . __( 'Settings' ) . '</a>';
 				array_unshift( $links, $settings_link );
@@ -37,7 +48,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 			return $links;
 		}
 
-		function config_page_scripts() {
+		public function config_page_scripts() {
 			if ( isset( $_GET['page'] ) && $_GET['page'] == $this->hook ) {
 				wp_enqueue_script( 'postbox' );
 				wp_enqueue_script( 'dashboard' );
@@ -46,7 +57,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 			}
 		}
 
-		function config_page_styles() {
+		public function config_page_styles() {
 			if ( isset( $_GET['page'] ) && $_GET['page'] == $this->hook ) {
 				wp_enqueue_style( 'dashboard' );
 				wp_enqueue_style( 'thickbox' );
@@ -58,7 +69,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 		/**
 		 * Create a postbox widget
 		 */
-		function postbox( $id, $title, $content ) {
+		public function postbox( $id, $title, $content ) {
 		?>
 			<div id="<?php echo $id; ?>" class="postbox">
 				<div class="handlediv" title="Click to toggle"><br /></div>
@@ -73,18 +84,20 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 		/**
 		 * Create a form table from an array of rows
 		 */
-		function form_table( $rows ) {
+		public function form_table( $rows ) {
 			$content = '<table class="form-table">';
 			foreach ( $rows as $row ) {
 				$content .= '<tr valign="top"><th scrope="row">';
-				if ( isset( $row['id'] ) && $row['id'] != '' )
+				if ( isset( $row['id'] ) && $row['id'] != '' ) {
 					$content .= '<label for="' . $row['id'] . '">' . $row['label'] . ':</label>';
-				else
+				} else {
 					$content .= $row['label'];
+				}
 				$content .= '</th><td>';
 				$content .= $row['content'];
-				if ( isset( $row['desc'] ) && $row['desc'] != '' )
+				if ( isset( $row['desc'] ) && $row['desc'] != '' ) {
 					$content .= '<br/><small>' . $row['desc'] . '</small>';
+				}
 				$content .= '</td></tr>';
 			}
 			$content .= '</table>';
@@ -94,25 +107,25 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 		/**
 		 * Info box with link to the support forums.
 		 */
-		function plugin_support() {
+		public function plugin_support() {
 			$content = '<p>' . __( 'If you have any problems with this plugin or good ideas for improvements or new features, please write an e-mail to <a href="mailto:info@elektroelch.de">info@elektroelch.de</a> or send a tweet to @latz.</p>', 'linklist' );
 			$this->postbox( $this->hook . 'support', 'Need support?', $content );
 		}
 
-	function radiobutton($name, $value, $text, $options) {
+	public function radiobutton($name, $value, $text, $options) {
 	      return '<label><input type="radio" name="' . $name . '" id="' . $value . '" value="' . $value . '"' .
 		 ($options[$name] == $value ? ' checked' : '') .  '>&nbsp;' . __($text, 'linklist') . '</label>';
 		}
-    function checkbox($text, $var, $options) {
+    public function checkbox($text, $var, $options) {
 	    return '<label id="lbl_' . $var . '"><input type="checkbox" id="cb_' . $var . '" name="' . $var . '"' .
         ($options [$var] ? "checked" : '') . '>&nbsp;' . __($text, 'linklist') . "</label><br/>\n";
 		}
 
-    function option_trim($option) {
+    public function option_trim($option) {
         return trim($option);
     }
 
-	function config_page() {
+	public function config_page() {
 
 		$options = array('post_active',	  'page_active',   'feed_active',
 						 'post_prolog',   'page_prolog',   'feed_prolog',
@@ -130,24 +143,29 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
         $option_priority = 10;
 
 		if ( isset($_POST['submit']) ) {
-			if (!current_user_can('manage_options')) wp_die(__('You cannot edit the LinkList options.'));
+			if (!current_user_can('manage_options')) {
+				wp_die(__('You cannot edit the LinkList options.'));
+			}
 			check_admin_referer('linklist-config');
 
 
-		   foreach($options as $option)
+		   foreach($options as $option) {
 			$ll_options[$option] = (isset  ($_POST [$option])) ? sanitize_text_field( wp_unslash( $_POST [$option] ) ) : '';
+		   }
 
             // convert string list to array for easier access in main plugin
             // TODO: array_map()
             if (isset($ll_options['exceptions'])) {
                 $ll_options['exceptions'] = explode( ',', $ll_options['exceptions']);
-                for ($i=0; $i<sizeof($ll_options['exceptions']); $i++)
+                for ($i=0; $i<sizeof($ll_options['exceptions']); $i++) {
                     $ll_options['exceptions'][$i] = trim($ll_options['exceptions'][$i]);
+                }
             }
 			update_option('linklist', $ll_options);
 
-            if (isset($_POST['priority']))
+            if (isset($_POST['priority'])) {
                 update_option('linklist_priority', absint($_POST['priority']));
+            }
 
 		}
 		$options  = get_option('linklist');
@@ -162,8 +180,9 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 					<div class="meta-box-sortables">
 						<form action="" method="post" id="linklist-conf">
 						<?php
-						if ( function_exists('wp_nonce_field') )
+						if ( function_exists('wp_nonce_field') ) {
 							wp_nonce_field('linklist-config');
+						}
 
 
 
@@ -194,8 +213,9 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
                         $content = '<input type="text" name="exceptions" class="regular-text"';
                         // Condition necessary for updates
 
-                        if (isset($options['exceptions']))
+                        if (isset($options['exceptions'])) {
                             $content .= ' value="' . esc_attr( $options['exceptions'] ) . '"';
+                        }
                         $content .= '>';
 
                         $rows[] = array(
@@ -208,8 +228,9 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
                         $content = '<input type="text" name="priority" class="regular-text"';
                         // Condition necessary for updates
 
-                        if (isset($option_priority))
+                        if (isset($option_priority)) {
                             $content .= ' value="' . esc_attr( $option_priority ) . '"';
+                        }
                         $content .= '>';
 
                         $rows[] = array(
@@ -225,7 +246,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 						$rows = array();
 						$rows[] = array(
 							"id" => "post_prolog",
-							"label" => "Content to put in front of list",
+							"label" => self::LABEL_PROLOG,
 							"desc" => "",
 							"content" => '<input type="text" name="post_prolog" class="regular-text" value="' .
 										  esc_attr($options['post_prolog']). '">'
@@ -233,11 +254,11 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						$rows[] = array(
 							"id" => "style_type",
-							"label" => "Style of list",
+							"label" => self::LABEL_STYLE,
 							"desc" => "",
-							"content" => $this->radiobutton('post_style', 'rbol', 'ordered list', $options) . "<br/>\n" .
-										 $this->radiobutton('post_style', 'rbul', 'unordered list', $options) . "<br/>\n" .
-										 $this->radiobutton('post_style', 'rbli', 'char separated', $options) .
+							"content" => $this->radiobutton('post_style', 'rbol', self::LABEL_STYLE_OL, $options) . "<br/>\n" .
+										 $this->radiobutton('post_style', 'rbul', self::LABEL_STYLE_UL, $options) . "<br/>\n" .
+										 $this->radiobutton('post_style', 'rbli', self::LABEL_STYLE_SEP, $options) .
 										 '&nbsp;<input type="text" size="10" name="post_sep" value="' .
 										  esc_attr($options['post_sep']). '">'
 
@@ -246,8 +267,8 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						$rows[] = array(
 							"id" => "post_minlinks",
-							"label" => "Minimum links",
-							"desc" => "Minimum number of links to display LinkList",
+							"label" => self::LABEL_MINLINKS,
+							"desc" => self::DESC_MINLINKS,
 							"content" => '<input type="text" name="post_minlinks" class="regular-text" value="' .
 										  esc_attr($options['post_minlinks']). '">'
 						);
@@ -256,7 +277,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"id" => "post_sortlinks",
 							"label" => "Sorting",
 							"desc" => "",
-							"content" => $this->checkbox('Sort links alphabetically', 'post_sort', $options)
+							"content" => $this->checkbox(self::LABEL_SORT, 'post_sort', $options)
 						);
 
 						$rows[] = array(
@@ -286,7 +307,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 						$rows = array();
 						$rows[] = array(
 							"id" => "page_prolog",
-							"label" => "Content to put in front of list",
+							"label" => self::LABEL_PROLOG,
 							"desc" => "",
 							"content" => '<input type="text" name="page_prolog" class="regular-text" value="' .
 										  esc_attr($options['page_prolog']). '">'
@@ -294,19 +315,19 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						$rows[] = array(
 							"id" => "page_style",
-							"label" => "Style of list",
+							"label" => self::LABEL_STYLE,
 							"desc" => "",
-							"content" => $this->radiobutton('page_style', 'rbol', 'ordered list', $options) . "<br/>\n" .
-										 $this->radiobutton('page_style', 'rbul', 'unordered list', $options) . "<br/>\n" .
-										 $this->radiobutton('page_style', 'rbli', 'char separated', $options) .
+							"content" => $this->radiobutton('page_style', 'rbol', self::LABEL_STYLE_OL, $options) . "<br/>\n" .
+										 $this->radiobutton('page_style', 'rbul', self::LABEL_STYLE_UL, $options) . "<br/>\n" .
+										 $this->radiobutton('page_style', 'rbli', self::LABEL_STYLE_SEP, $options) .
 										 '&nbsp;<input type="text" size="10" name="page_sep" value="' .
 										  esc_attr($options['page_sep']). '">'
 						);
 
 						$rows[] = array(
 							"id" => "page_minlinks",
-							"label" => "Minimum links",
-							"desc" => "Minimum number of links to display LinkList",
+							"label" => self::LABEL_MINLINKS,
+							"desc" => self::DESC_MINLINKS,
 							"content" => '<input type="text" name="page_minlinks" class="regular-text" value="' .
 										  esc_attr($options['page_minlinks']). '">'
 						);
@@ -315,7 +336,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"id" => "page_sortlinks",
 							"label" => "Sorting",
 							"desc" => "",
-							"content" => $this->checkbox('Sort links alphabetically', 'page_sort', $options)
+							"content" => $this->checkbox(self::LABEL_SORT, 'page_sort', $options)
 						);
 
 						$rows[] = array(
@@ -331,7 +352,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 						$rows = array();
 						$rows[] = array(
 							"id" => "feed_prolog",
-							"label" => "Content to put in front of list",
+							"label" => self::LABEL_PROLOG,
 							"desc" => "",
 							"content" => '<input type="text" name="feed_prolog" class="regular-text" value="' .
 										  esc_attr($options['feed_prolog']). '">'
@@ -339,11 +360,11 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						$rows[] = array(
 							"id" => "style_type",
-							"label" => "Style of list",
+							"label" => self::LABEL_STYLE,
 							"desc" => "",
-							"content" => $this->radiobutton('feed_style', 'rbol', 'ordered list', $options) . "<br/>\n" .
-										 $this->radiobutton('feed_style', 'rbul', 'unordered list', $options) . "<br/>\n" .
-										 $this->radiobutton('feed_style', 'rbli', 'char separated', $options) .
+							"content" => $this->radiobutton('feed_style', 'rbol', self::LABEL_STYLE_OL, $options) . "<br/>\n" .
+										 $this->radiobutton('feed_style', 'rbul', self::LABEL_STYLE_UL, $options) . "<br/>\n" .
+										 $this->radiobutton('feed_style', 'rbli', self::LABEL_STYLE_SEP, $options) .
 										 '&nbsp;<input type="text" size="10" name="feed_sep" value="' .
 										  esc_attr($options['feed_sep']). '">'
 
@@ -352,8 +373,8 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						$rows[] = array(
 							"id" => "feed_minlinks",
-							"label" => "Minimum links",
-							"desc" => "Minimum number of links to display LinkList",
+							"label" => self::LABEL_MINLINKS,
+							"desc" => self::DESC_MINLINKS,
 							"content" => '<input type="text" name="feed_minlinks" class="regular-text" value="' .
 										  esc_attr($options['feed_minlinks']). '">'
 						);
@@ -362,7 +383,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"id" => "feed_sortlinks",
 							"label" => "Sorting",
 							"desc" => "",
-							"content" => $this->checkbox('Sort links alphabetically', 'feed_sort', $options)
+							"content" => $this->checkbox(self::LABEL_SORT, 'feed_sort', $options)
 						);
 
 

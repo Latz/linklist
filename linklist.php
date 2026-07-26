@@ -30,13 +30,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 if ( !class_exists('LinkList') ) {
 	class LinkList {
-		var $content;
-		var $linklist;
-		var $prefix;
-		var $options;
+		public $content;
+		public $linklist;
+		public $prefix;
+		public $options;
 
 		/* ------------------------------------------------------------------------ */
-		function linkExtractor($content){
+		public function linkExtractor($content){
 			global $post;
 
 			$processor = WP_HTML_Processor::create_fragment($content);
@@ -44,73 +44,82 @@ if ( !class_exists('LinkList') ) {
 			$excludedDivs = array(); // stack of bools: is each open DIV ancestor excluded?
 
 			while ($processor->next_token()) {
-				if ('#tag' !== $processor->get_token_type())
+				if ('#tag' !== $processor->get_token_type()) {
 					continue;
+				}
 
 				$tag = $processor->get_tag();
 
 				if ('DIV' === $tag) {
-					if ($processor->is_tag_closer())
+					if ($processor->is_tag_closer()) {
 						array_pop($excludedDivs);
-					else
+					} else {
 						// exact match against the div's full class attribute, matching the
 						// previous DOMDocument-based behaviour (no per-class-token matching)
 						$excludedDivs[] = ! empty($this->options['exceptions'])
 							&& in_array($processor->get_attribute('class'), $this->options['exceptions']);
+					}
 					continue;
 				}
 
-				if ('A' !== $tag || $processor->is_tag_closer() || in_array(true, $excludedDivs, true))
+				if ('A' !== $tag || $processor->is_tag_closer() || in_array(true, $excludedDivs, true)) {
 					continue;
+				}
 
 				$href = $processor->get_attribute('href');
-				if (! is_string($href))
+				if (! is_string($href)) {
 					continue;
+				}
 
 				// accumulate the link's inner HTML until its closing tag; HTML
 				// doesn't allow nested <a> elements, so the next </a> is always
 				// this anchor's own closer
 				$inner = '';
 				while ($processor->next_token()) {
-					if ('#tag' === $processor->get_token_type() && 'A' === $processor->get_tag() && $processor->is_tag_closer())
+					if ('#tag' === $processor->get_token_type() && 'A' === $processor->get_tag() && $processor->is_tag_closer()) {
 						break;
+					}
 					$inner .= $processor->serialize_token();
 				}
 
 				if ( (strpos($inner, '<img') === false) // avoid pure image links
 					&& (strpos($href, '#more-'.$post->ID) === false)  // avoid <!--more--> links
-					&& (! in_array(array($href, $inner), $linkArray))) // avoid double entries
+					&& (! in_array(array($href, $inner), $linkArray))) { // avoid double entries
 						array_push($linkArray, array($href, $inner));
+				}
 			} //while
 
 		 return $linkArray;
 		} //linkExtractor()
 		/* ------------------------------------------------------------------------ */
-		function __construct($content) {
+		public function __construct($content) {
 			$this->content = $content;
             $this->options = get_option('linklist');
 		} //linklist()
 		/* ------------------------------------------------------------------------ */
-		function stopCreate() {
+		public function stopCreate() {
 			return 0;
 		}
 		/* -------------------------------------------------------------------------- */
-		function linklist_sorter($a, $b) {
+		public function linklist_sorter($a, $b) {
 			return strnatcasecmp( $a[1], $b[1] );
 		}
 		/* ------------------------------------------------------------------------ */
-    	function createLinkList() {
+    	public function createLinkList() {
 
 		    // if the user has deslected to display the list only return the content
-		    if (get_post_meta( get_the_ID(), 'linklist-display', true ) == '0')
+		    if (get_post_meta( get_the_ID(), 'linklist-display', true ) == '0') {
 			    return $this->content;
+		    }
 
-			if ($this->stopCreate())
+			if ($this->stopCreate()) {
 			  return $this->content;
+			}
 
 			$list = $this->buildList();
-			if ($list === '')
+			if ($list === '') {
 			  return $this->content;
+			}
 
 			$this->content .= $list;
 
@@ -122,7 +131,7 @@ if ( !class_exists('LinkList') ) {
 		// $overrides may supply 'style', 'prolog', 'sep', 'sort', 'minlinks' to
 		// take precedence over the stored $this->prefix-prefixed option for this
 		// context; omit/null a key to fall back to the stored option.
-		function buildList($overrides = array()) {
+		public function buildList($overrides = array()) {
 
 			$opt = function($key) use ($overrides) {
 				return (isset($overrides[$key]) && $overrides[$key] !== '' && $overrides[$key] !== null)
@@ -131,15 +140,18 @@ if ( !class_exists('LinkList') ) {
 			};
 
       		$this->linklist = $this->linkExtractor($this->content);
-			if (! $this->linklist)
+			if (! $this->linklist) {
 			  return '';
+			}
 
 			 // min number of links
-			if (sizeof($this->linklist) < $opt('minlinks') )
+			if (sizeof($this->linklist) < $opt('minlinks') ) {
 				return '';
+			}
 
-     		if ($opt('sort'))
+     		if ($opt('sort')) {
 				usort($this->linklist, array($this, 'linklist_sorter'));
+     		}
 
 			$list = '<div class="linklist"><span class=linklistheader">' .
 			$opt('prolog') . '</span>';
@@ -151,7 +163,8 @@ if ( !class_exists('LinkList') ) {
 				case 'rbul': $start = "<ul>";
 										 $end   = "</ul>";
 										 break;
-		        case 'rbol': $start = "<ol>";
+		        case 'rbol':
+		        default: $start = "<ol>";
 					 					 $end   = "</ol>";
 										 break;
 				case 'rbli': $start = "";
@@ -162,12 +175,14 @@ if ( !class_exists('LinkList') ) {
 		  } //switch
 
 		  $list .= $start;
-		  foreach ($this->linklist as $link)
+		  foreach ($this->linklist as $link) {
 		    $list .= $del_start . '<a href="' . esc_url($link[0]) . '">' . $link[1].'</a>'.$del_end;
+		  }
 
 		  // remove last separator
-		  if ($opt('style') == "rbli")
+		  if ($opt('style') == "rbli") {
 		    $list = substr($list, 0, strlen($opt('sep')) * -1);
+		  }
 
 		  $list .= $end . "</div>";
 		  $list = apply_filters('linklist', $list);
@@ -183,36 +198,35 @@ if ( !class_exists('LinkList') ) {
 if ( !class_exists('PageLinkList') ) {
 	class PageLinkList extends LinkList{
 
-		var $prefix;
+		public $prefix;
 
 		/* ------------------------------------------------------------------------ */
-		function __construct($content) {
+		public function __construct($content) {
 			parent::__construct($content);
 			$this->prefix = 'page_';
 		}
 		/* ------------------------------------------------------------------------ */
-		function stopCreate() {
+		public function stopCreate() {
 			global $numpages, $page;
 
-		if (! $this->options['page_active'])
+		if (! $this->options['page_active']) {
 			return 1;
+		}
 
-		  if ($numpages > 1) //splitted page or post
-			{
-				// exit if display only on last page
-				if ($this->options['page_last'] && ($numpages != $page))
-					return 1;
-			}
+		  if ($numpages > 1 && $this->options['page_last'] && ($numpages != $page)) { //splitted page or post, display only on last page
+				return 1;
+		  }
 
 			return 0;  //default
 		}
 		/* ------------------------------------------------------------------------ */
-		function linkExtractor($content) {
+		public function linkExtractor($content) {
 		  global $post;
-			if ($this->options['page_last'])
+			if ($this->options['page_last']) {
 			  return parent::linkExtractor($post->post_content);
-      else
+      } else {
 			  return parent::linkExtractor($this->content);
+      }
 		}
 	} //class PageLinkList
 } //if
@@ -222,7 +236,7 @@ if ( !class_exists('SingleLinkList') ) {
 	class SingleLinkList extends LinkList{
 
 		/* ------------------------------------------------------------------------ */
-		function __construct($content) {
+		public function __construct($content) {
 			parent::__construct($content);
 			$this->prefix = 'post_';
 		}
@@ -232,13 +246,14 @@ if ( !class_exists('SingleLinkList') ) {
 if ( !class_exists('FeedLinkList') ) {
 	class FeedLinkList extends LinkList {
 		/* ------------------------------------------------------------------------ */
-		function stopCreate() {
-			if (! $this->options['feed_active'])
+		public function stopCreate() {
+			if (! $this->options['feed_active']) {
 				return 1;
+			}
 			return 0;  //default
 		}
 		/* ------------------------------------------------------------------------ */
-		function __construct($content) {
+		public function __construct($content) {
 			parent::__construct($content);
 			$this->prefix = 'feed_';
 		}
@@ -250,27 +265,29 @@ if ( !class_exists('BasicLinkList') ) {
 	class BasicLinkList extends LinkList{
 
 		/* -------------------------------------------------------------------------- */
-		function hasMoreLink() {
+		public function hasMoreLink() {
 			global $post;
 			return '' !== get_extended( $post->post_content )['extended'];
 		}
  		/* ------------------------------------------------------------------------ */
-		function stopCreate() {
+		public function stopCreate() {
 
-			if (! $this->options['post_active'])
+			if (! $this->options['post_active']) {
 				return 1;
+			}
 
-			if ($this->hasMoreLink())
-		    if ($this->options[$this->prefix . 'more'])
-					return 1;
+			if ($this->hasMoreLink() && $this->options[$this->prefix . 'more']) {
+				return 1;
+			}
 
-			if ($this->options['post_display'])
+			if ($this->options['post_display']) {
 			  return 1;
+			}
 
 			return 0;
 		}
  		/* ------------------------------------------------------------------------ */
-		function __construct($content) {
+		public function __construct($content) {
 			parent::__construct($content);
 			$this->prefix = 'post_';
 		}
@@ -281,17 +298,19 @@ function create_linklist($content) {
  global $options, $post;
 
  // the Link List block already renders the list in place; don't also append it
- if ($post && has_block('linklist/linklist', $post))
+ if ($post && has_block('linklist/linklist', $post)) {
    return $content;
+ }
 
- if (is_page())
+ if (is_page()) {
    $linklist = new PageLinkList($content);
- elseif (is_single())
+ } elseif (is_single()) {
    $linklist = new SingleLinkList($content);
- elseif (is_feed())
+ } elseif (is_feed()) {
    $linklist = new FeedLinkList($content);
- else
+ } else {
    $linklist = new BasicLinkList($content);
+ }
 
 return $linklist->createLinkList();
 
@@ -301,8 +320,9 @@ return $linklist->createLinkList();
 /* --------------------------------------------------------------------------- */
 function llactivate() {
 
-	if (get_option('linklist'))
+	if (get_option('linklist')) {
 	  return;
+	}
 	$options = ['post_active'   => 'on',
                 'page_active'   => 'on',
                 'feed_active'   => 'on',
@@ -342,10 +362,11 @@ function linklist_CreateMetaBoxContent($object) {
 
 	// if no post meta is available get the default value from the options
 
-	if ($post_meta == '0')
+	if ($post_meta == '0') {
 		echo '<label for="linklist-display"><input id="linklist-display" name="linklist-display" type="checkbox" value="true">';
-	else
+	} else {
 		echo '<label for="linklist-display"><input id="linklist-display" name="linklist-display" type="checkbox" value="true"  checked="checked">';
+	}
 
 	printf('&nbsp%s</label>', __('Display Linklist'));
 }
@@ -353,8 +374,9 @@ function linklist_CreateMetaBoxContent($object) {
 function linklist_AddMetaBox() {
 
 	$screens = array( 'post', 'page' );
-	foreach ( $screens as $screen )
+	foreach ( $screens as $screen ) {
 		add_meta_box('linklist-meta-box', 'Linklist', 'linklist_CreateMetaBoxContent', $screen, 'side', 'default', null);
+	}
 
 }
 /* --------------------------------------------------------------------------- */
@@ -363,29 +385,32 @@ function save_linklist_meta_box($post_id, $post, $update) {
 	// check if the form was submitted corrected
 	if  ( (! isset($_POST["linklist-meta-box-nonce"])   || (! wp_verify_nonce($_POST["linklist-meta-box-nonce"], basename(__FILE__))))
 	     and (! isset($_POST["linklist-quick-edit-nonce"]) || (! wp_verify_nonce($_POST["linklist-quick-edit-nonce"], basename(__FILE__))))
-		)
+		) {
 			return $post_id;
+	}
 
-	if( ! current_user_can('edit_post', $post_id))
+	if( ! current_user_can('edit_post', $post_id)) {
 		return $post_id;
+	}
 
-	if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
+	if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
 		return $post_id;
+	}
 
 	// save quick edit data
 	if (isset($_POST["linklist-quick-edit-nonce"])) // save quick edit
 	{
 		update_post_meta($post_id, 'linklist-display', 'yes' == $_POST['linklist-selectbox'] ? 1:0);
-	}
-
-	else // save edit post page
+	} else { // save edit post page
 		update_post_meta($post_id, 'linklist-display', isset($_POST['linklist-display']) ? 1 : 0);
+	}
 }
 /* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_add_posts_column( $columns, $post_type ) {
 	$types = array('post', 'page');
-	if (in_array( $post_type, $types) )
+	if (in_array( $post_type, $types) ) {
 		$columns[ 'linklist' ] = 'Linklist';
+	}
 	return $columns;
 }/* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_populate_columns( $column_name, $post_id) {
@@ -455,21 +480,24 @@ function linklist_save_bulk_edit() {
 	$post_ids = ( isset( $_POST[ 'post_ids' ] ) && !empty( $_POST[ 'post_ids' ] ) ) ? $_POST[ 'post_ids' ] : array();
 	$linklist_state = ( isset( $_POST[ 'linklist_state' ] ) && !empty( $_POST[ 'linklist_state' ] ) ) ? $_POST[ 'linklist_state' ] : NULL;
 
-	if (empty ($post_ids))
+	if (empty ($post_ids)) {
 		return;
-	if ($linklist_state == 'nochange')
+	}
+	if ($linklist_state == 'nochange') {
 		return;
+	}
 
-	foreach ($post_ids as $post_id)
+	foreach ($post_ids as $post_id) {
 		update_post_meta($post_id, 'linklist-display', 'yes' == $linklist_state? 1 : 0);
+	}
 
 }
 /* ------------------------------------------------------------------------------------------------------------------ */
 
-require_once('render.php');
+require_once 'render.php';
 
 if (is_admin()) {
-    require_once('linklist-options.php');
+    require_once 'linklist-options.php';
 	register_activation_hook( __FILE__, 'llactivate' );
 
 	// add per post display support
@@ -485,7 +513,8 @@ if (is_admin()) {
 }
 
 $priority = get_option('linklist_priority');
-if (! $priority)
+if (! $priority) {
     $priority = 10;
+}
 
 add_filter('the_content', 'create_linklist', $priority);
