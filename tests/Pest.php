@@ -22,9 +22,8 @@ uses(Tests\TestCase::class)->in('Unit');
 | settings screen as a side effect of being require_once'd. We load them
 | exactly once here, inside a throwaway Brain Monkey context, stubbing the
 | handful of WordPress functions that fire at load time so the require
-| doesn't fatal. is_admin() is stubbed false so linklist-options.php (and
-| its Yoast_Plugin_Admin dependency) never loads — none of the classes under
-| test live there.
+| doesn't fatal. is_admin() is stubbed false so linklist-options.php never
+| loads — none of the classes under test live there.
 |
 */
 

@@ -1,15 +1,103 @@
 <?php
 if ( ! class_exists( 'LinkList_Admin' ) ) {
 
-	require_once('yst_plugin_tools.php');
-
-	class LinkList_Admin extends Yoast_Plugin_Admin {
+	class LinkList_Admin {
 
 		var $hook 		= 'linklist';
 		var $longname	= 'LinkList Configuration';
 		var $shortname	= 'LinkList';
 		var $filename	= 'linklist/linklist.php';
-		var $ozhicon	= 'feed_edit.png';
+
+		function __construct() {
+			add_action( 'admin_menu', array( &$this, 'register_settings_page' ) );
+			add_filter( 'plugin_action_links', array( &$this, 'add_action_link' ), 10, 2 );
+
+			add_action( 'admin_print_scripts', array( &$this, 'config_page_scripts' ) );
+			add_action( 'admin_print_styles', array( &$this, 'config_page_styles' ) );
+		}
+
+		function register_settings_page() {
+			add_options_page( $this->longname, $this->shortname, 'manage_options', $this->hook, array( &$this, 'config_page' ) );
+		}
+
+		function plugin_options_url() {
+			return admin_url( 'options-general.php?page=' . $this->hook );
+		}
+
+		/**
+		 * Add a link to the settings page to the plugins list
+		 */
+		function add_action_link( $links, $file ) {
+			static $this_plugin;
+			if ( empty( $this_plugin ) ) $this_plugin = $this->filename;
+			if ( $file == $this_plugin ) {
+				$settings_link = '<a href="' . $this->plugin_options_url() . '">' . __( 'Settings' ) . '</a>';
+				array_unshift( $links, $settings_link );
+			}
+			return $links;
+		}
+
+		function config_page_scripts() {
+			if ( isset( $_GET['page'] ) && $_GET['page'] == $this->hook ) {
+				wp_enqueue_script( 'postbox' );
+				wp_enqueue_script( 'dashboard' );
+				wp_enqueue_script( 'thickbox' );
+				wp_enqueue_script( 'media-upload' );
+			}
+		}
+
+		function config_page_styles() {
+			if ( isset( $_GET['page'] ) && $_GET['page'] == $this->hook ) {
+				wp_enqueue_style( 'dashboard' );
+				wp_enqueue_style( 'thickbox' );
+				wp_enqueue_style( 'global' );
+				wp_enqueue_style( 'wp-admin' );
+			}
+		}
+
+		/**
+		 * Create a postbox widget
+		 */
+		function postbox( $id, $title, $content ) {
+		?>
+			<div id="<?php echo $id; ?>" class="postbox">
+				<div class="handlediv" title="Click to toggle"><br /></div>
+				<h3 class="hndle"><span><?php echo $title; ?></span></h3>
+				<div class="inside">
+					<?php echo $content; ?>
+				</div>
+			</div>
+		<?php
+		}
+
+		/**
+		 * Create a form table from an array of rows
+		 */
+		function form_table( $rows ) {
+			$content = '<table class="form-table">';
+			foreach ( $rows as $row ) {
+				$content .= '<tr valign="top"><th scrope="row">';
+				if ( isset( $row['id'] ) && $row['id'] != '' )
+					$content .= '<label for="' . $row['id'] . '">' . $row['label'] . ':</label>';
+				else
+					$content .= $row['label'];
+				$content .= '</th><td>';
+				$content .= $row['content'];
+				if ( isset( $row['desc'] ) && $row['desc'] != '' )
+					$content .= '<br/><small>' . $row['desc'] . '</small>';
+				$content .= '</td></tr>';
+			}
+			$content .= '</table>';
+			return $content;
+		}
+
+		/**
+		 * Info box with link to the support forums.
+		 */
+		function plugin_support() {
+			$content = '<p>' . __( 'If you have any problems with this plugin or good ideas for improvements or new features, please write an e-mail to <a href="mailto:info@elektroelch.de">info@elektroelch.de</a> or send a tweet to @latz.</p>', 'linklist' );
+			$this->postbox( $this->hook . 'support', 'Need support?', $content );
+		}
 
 	function radiobutton($name, $value, $text, $options) {
 	      return '<label><input type="radio" name="' . $name . '" id="' . $value . '" value="' . $value . '"' .
@@ -294,7 +382,6 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 				<div class="metabox-holder">
 					<div class="meta-box-sortables">
 						<?php
-							//$this->plugin_like();
 							$this->plugin_support();
 						?>
 					</div>
