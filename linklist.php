@@ -57,14 +57,7 @@ if ( !class_exists('LinkList') ) {
 				$tag = $processor->get_tag();
 
 				if ('DIV' === $tag) {
-					if ($processor->is_tag_closer()) {
-						array_pop($excludedDivs);
-					} else {
-						// exact match against the div's full class attribute, matching the
-						// previous DOMDocument-based behaviour (no per-class-token matching)
-						$excludedDivs[] = ! empty($this->options['exceptions'])
-							&& in_array($processor->get_attribute('class'), $this->options['exceptions']);
-					}
+					$this->trackDivExclusion($processor, $excludedDivs);
 					continue;
 				}
 
@@ -77,26 +70,51 @@ if ( !class_exists('LinkList') ) {
 					continue;
 				}
 
-				// accumulate the link's inner HTML until its closing tag; HTML
-				// doesn't allow nested <a> elements, so the next </a> is always
-				// this anchor's own closer
-				$inner = '';
-				while ($processor->next_token()) {
-					if ('#tag' === $processor->get_token_type() && 'A' === $processor->get_tag() && $processor->is_tag_closer()) {
-						break;
-					}
-					$inner .= $processor->serialize_token();
-				}
+				$inner = $this->collectAnchorInnerHtml($processor);
 
-				if ( (strpos($inner, '<img') === false) // avoid pure image links
-					&& (strpos($href, '#more-'.$post->ID) === false)  // avoid <!--more--> links
-					&& (! in_array(array($href, $inner), $linkArray))) { // avoid double entries
-						array_push($linkArray, array($href, $inner));
+				if ($this->isHarvestableLink($inner, $href, $linkArray, $post->ID)) {
+					array_push($linkArray, array($href, $inner));
 				}
 			} //while
 
 		 return $linkArray;
 		} //linkExtractor()
+		/* ------------------------------------------------------------------------ */
+		// Push/pop the DIV-exclusion stack for one DIV open/close token, tracking
+		// whether the current DIV ancestor chain matches an excepted class.
+		private function trackDivExclusion($processor, array &$excludedDivs) {
+			if ($processor->is_tag_closer()) {
+				array_pop($excludedDivs);
+				return;
+			}
+
+			// exact match against the div's full class attribute, matching the
+			// previous DOMDocument-based behaviour (no per-class-token matching)
+			$excludedDivs[] = ! empty($this->options['exceptions'])
+				&& in_array($processor->get_attribute('class'), $this->options['exceptions']);
+		}
+		/* ------------------------------------------------------------------------ */
+		// Accumulate an anchor's inner HTML until its closing tag; HTML doesn't
+		// allow nested <a> elements, so the next </a> is always this anchor's own
+		// closer.
+		private function collectAnchorInnerHtml($processor) {
+			$inner = '';
+			while ($processor->next_token()) {
+				if ('#tag' === $processor->get_token_type() && 'A' === $processor->get_tag() && $processor->is_tag_closer()) {
+					break;
+				}
+				$inner .= $processor->serialize_token();
+			}
+			return $inner;
+		}
+		/* ------------------------------------------------------------------------ */
+		// Whether a discovered link should be kept: not a pure image link, not the
+		// post's own <!--more--> anchor, and not already collected.
+		private function isHarvestableLink($inner, $href, array $linkArray, $post_id) {
+			return strpos($inner, '<img') === false // avoid pure image links
+				&& strpos($href, '#more-' . $post_id) === false // avoid <!--more--> links
+				&& ! in_array(array($href, $inner), $linkArray); // avoid double entries
+		}
 		/* ------------------------------------------------------------------------ */
 		public function __construct($content) {
 			$this->content = $content;
@@ -359,7 +377,7 @@ function linklist_activate() {
 }
 
 /* --------------------------------------------------------------------------- */
-function linklist_CreateMetaBoxContent($object) {
+function linklist_create_meta_box_content($object) {
 
 
 	wp_nonce_field(basename(__FILE__), "linklist-meta-box-nonce");
@@ -405,26 +423,31 @@ function linklist_should_show_editor_control( $post_type, $post = null ) {
 	return $post && ! has_block( 'linklist/linklist', $post );
 }
 /* --------------------------------------------------------------------------- */
-function linklist_AddMetaBox( $post_type, $post = null ) {
-
-	$screens = array( 'post', 'page' );
-	foreach ( $screens as $screen ) {
-		if ( linklist_should_show_editor_control( $screen, $post ) ) {
-			add_meta_box('linklist-meta-box', 'Linklist', 'linklist_CreateMetaBoxContent', $screen, 'side', 'default', null);
-		}
+function linklist_add_meta_box( $post_type, $post = null ) {
+	if ( linklist_should_show_editor_control( $post_type, $post ) ) {
+		add_meta_box('linklist-meta-box', 'Linklist', 'linklist_create_meta_box_content', $post_type, 'side', 'default', null);
 	}
-
 }
 /* --------------------------------------------------------------------------- */
-function linklist_save_meta_box($post_id) {
-
-	// check if the form was submitted corrected
+/**
+ * Whether the current request carries a valid LinkList save nonce, from
+ * either the classic meta box or quick edit.
+ */
+function linklist_has_valid_save_nonce() {
 	$meta_box_nonce   = isset($_POST["linklist-meta-box-nonce"]) ? sanitize_text_field(wp_unslash($_POST["linklist-meta-box-nonce"])) : '';
 	$quick_edit_nonce = isset($_POST["linklist-quick-edit-nonce"]) ? sanitize_text_field(wp_unslash($_POST["linklist-quick-edit-nonce"])) : '';
-	if  ( (! $meta_box_nonce   || (! wp_verify_nonce($meta_box_nonce, basename(__FILE__))))
-	     && (! $quick_edit_nonce || (! wp_verify_nonce($quick_edit_nonce, basename(__FILE__))))
-		) {
-			return $post_id;
+
+	if ($meta_box_nonce && wp_verify_nonce($meta_box_nonce, basename(__FILE__))) {
+		return true;
+	}
+
+	return $quick_edit_nonce && wp_verify_nonce($quick_edit_nonce, basename(__FILE__));
+}
+/* ------------------------------------------------------------------------------------------------------------------ */
+function linklist_save_meta_box($post_id) {
+
+	if ( ! linklist_has_valid_save_nonce() ) {
+		return $post_id;
 	}
 
 	if( ! current_user_can('edit_post', $post_id)) {
@@ -468,6 +491,11 @@ function linklist_populate_columns( $column_name, $post_id) {
 function linklist_add_to_quick_edit_custom_box($column_name, $post_type) {
 global $post_id;
 
+	// this hook fires once per registered custom column, not just this plugin's
+	if ( 'linklist' !== $column_name ) {
+		return;
+	}
+
 	wp_nonce_field(basename(__FILE__), "linklist-quick-edit-nonce");
 
 	if ( linklist_should_show_editor_control( $post_type ) ) {
@@ -490,6 +518,11 @@ global $post_id;
 /* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_add_to_bulk_edit_custom_box($column_name, $post_type) {
 	global $post_id;
+
+	// this hook fires once per registered custom column, not just this plugin's
+	if ( 'linklist' !== $column_name ) {
+		return;
+	}
 
 	wp_nonce_field(basename(__FILE__), "linklist-quick-edit-nonce");
 
@@ -546,7 +579,7 @@ if (is_admin()) {
 	register_activation_hook( __FILE__, 'linklist_activate' );
 
 	// add per post display support
-	add_action( 'add_meta_boxes', 'linklist_AddMetaBox', 10, 2 );
+	add_action( 'add_meta_boxes', 'linklist_add_meta_box', 10, 2 );
 	add_action( "save_post", "linklist_save_meta_box", 10, 1);
 	add_filter( 'manage_posts_columns', 'linklist_add_posts_column', 10, 2 );
 	add_action( 'manage_posts_custom_column', 'linklist_populate_columns', 10, 2 );

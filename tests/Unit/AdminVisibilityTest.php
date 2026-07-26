@@ -63,9 +63,9 @@ describe('linklist_should_show_editor_control', function () {
     });
 });
 
-describe('linklist_AddMetaBox', function () {
-    it('only registers the meta box for active post types', function () {
-        stubLinklistOptions(['post_active' => 'on', 'page_active' => '']);
+describe('linklist_add_meta_box', function () {
+    it('registers the meta box for the post type passed by the add_meta_boxes hook when active', function () {
+        stubLinklistOptions(['post_active' => 'on']);
         when('wp_is_block_theme')->justReturn(false);
 
         $registered = [];
@@ -73,13 +73,13 @@ describe('linklist_AddMetaBox', function () {
             $registered[] = $args[3];
         });
 
-        linklist_AddMetaBox('post');
+        linklist_add_meta_box('post');
 
         expect($registered)->toBe(['post']);
     });
 
-    it('registers the meta box for both types when both are active', function () {
-        stubLinklistOptions(['post_active' => 'on', 'page_active' => 'on']);
+    it('does not register the meta box when the type is inactive', function () {
+        stubLinklistOptions(['page_active' => '']);
         when('wp_is_block_theme')->justReturn(false);
 
         $registered = [];
@@ -87,13 +87,13 @@ describe('linklist_AddMetaBox', function () {
             $registered[] = $args[3];
         });
 
-        linklist_AddMetaBox('post');
+        linklist_add_meta_box('page');
 
-        expect($registered)->toBe(['post', 'page']);
+        expect($registered)->toBe([]);
     });
 
     it('skips the meta box on a block theme when the bound post already contains the block', function () {
-        stubLinklistOptions(['post_active' => 'on', 'page_active' => 'on']);
+        stubLinklistOptions(['post_active' => 'on']);
         when('wp_is_block_theme')->justReturn(true);
         when('has_block')->justReturn(true);
 
@@ -102,13 +102,13 @@ describe('linklist_AddMetaBox', function () {
             $registered[] = $args[3];
         });
 
-        linklist_AddMetaBox('post', (object) []);
+        linklist_add_meta_box('post', (object) []);
 
         expect($registered)->toBe([]);
     });
 
     it('still registers the meta box on a block theme when the bound post does not contain the block', function () {
-        stubLinklistOptions(['post_active' => 'on', 'page_active' => 'on']);
+        stubLinklistOptions(['post_active' => 'on']);
         when('wp_is_block_theme')->justReturn(true);
         when('has_block')->justReturn(false);
 
@@ -117,9 +117,9 @@ describe('linklist_AddMetaBox', function () {
             $registered[] = $args[3];
         });
 
-        linklist_AddMetaBox('post', (object) []);
+        linklist_add_meta_box('post', (object) []);
 
-        expect($registered)->toBe(['post', 'page']);
+        expect($registered)->toBe(['post']);
     });
 });
 
@@ -178,6 +178,18 @@ describe('linklist_add_to_quick_edit_custom_box', function () {
 
         expect($output)->toBe('');
     });
+
+    it('renders nothing for a column registered by another plugin', function () {
+        stubLinklistOptions(['post_active' => 'on']);
+        when('wp_is_block_theme')->justReturn(false);
+        when('wp_nonce_field')->justReturn('');
+
+        ob_start();
+        linklist_add_to_quick_edit_custom_box('some-other-column', 'post');
+        $output = ob_get_clean();
+
+        expect($output)->toBe('');
+    });
 });
 
 describe('linklist_add_to_bulk_edit_custom_box', function () {
@@ -213,6 +225,18 @@ describe('linklist_add_to_bulk_edit_custom_box', function () {
 
         ob_start();
         linklist_add_to_bulk_edit_custom_box('linklist', 'post');
+        $output = ob_get_clean();
+
+        expect($output)->toBe('');
+    });
+
+    it('renders nothing for a column registered by another plugin', function () {
+        stubLinklistOptions(['post_active' => 'on']);
+        when('wp_is_block_theme')->justReturn(false);
+        when('wp_nonce_field')->justReturn('');
+
+        ob_start();
+        linklist_add_to_bulk_edit_custom_box('some-other-column', 'post');
         $output = ob_get_clean();
 
         expect($output)->toBe('');

@@ -3,9 +3,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-if ( ! class_exists( 'LinkList_Admin' ) ) {
+if ( ! class_exists( 'LinkListAdmin' ) ) {
 
-	class LinkList_Admin {
+	class LinkListAdmin {
+
+		const PROLOG_LABEL   = 'Content to put in front of list';
+		const MINLINKS_LABEL = 'Minimum links';
+		const MINLINKS_DESC  = 'Minimum number of links to display LinkList';
 
 		public $hook 		= 'linklist';
 		public $longname	= 'LinkList Configuration';
@@ -261,9 +265,9 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						// ----------------------------------------------------------------------
 						$rows = array();
-						$rows[] = $this->text_row( "post_prolog", "Content to put in front of list", "", "post_prolog", $options['post_prolog'] );
+						$rows[] = $this->text_row( "post_prolog", self::PROLOG_LABEL, "", "post_prolog", $options['post_prolog'] );
 						$rows[] = $this->style_row( "style_type", "post", $options );
-						$rows[] = $this->text_row( "post_minlinks", "Minimum links", "Minimum number of links to display LinkList", "post_minlinks", $options['post_minlinks'] );
+						$rows[] = $this->text_row( "post_minlinks", self::MINLINKS_LABEL, self::MINLINKS_DESC, "post_minlinks", $options['post_minlinks'] );
 						$rows[] = $this->checkbox_row( "post_sortlinks", "Sorting", "", __( 'Sort links alphabetically', 'linklist' ), 'post_sort', $options );
 						$rows[] = $this->checkbox_row( "post_more", "More tag", '', __( "Don't display if &lt;--more--&gt; tag is present", 'linklist' ), 'post_more', $options );
 						$rows[] = $this->checkbox_row( "post_display", "Single post", "", __( 'Display only if single post is displayed (not on main blog page)', 'linklist' ), 'post_display', $options );
@@ -273,9 +277,9 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						// ----------------------------------------------------------------------
 						$rows = array();
-						$rows[] = $this->text_row( "page_prolog", "Content to put in front of list", "", "page_prolog", $options['page_prolog'] );
+						$rows[] = $this->text_row( "page_prolog", self::PROLOG_LABEL, "", "page_prolog", $options['page_prolog'] );
 						$rows[] = $this->style_row( "page_style", "page", $options );
-						$rows[] = $this->text_row( "page_minlinks", "Minimum links", "Minimum number of links to display LinkList", "page_minlinks", $options['page_minlinks'] );
+						$rows[] = $this->text_row( "page_minlinks", self::MINLINKS_LABEL, self::MINLINKS_DESC, "page_minlinks", $options['page_minlinks'] );
 						$rows[] = $this->checkbox_row( "page_sortlinks", "Sorting", "", __( 'Sort links alphabetically', 'linklist' ), 'page_sort', $options );
 						$rows[] = $this->checkbox_row( "page_last", "Last page only", "", __( 'Display only on last page if post is splitted', 'linklist' ), 'page_last', $options );
 
@@ -283,9 +287,9 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						// ----------------------------------------------------------------------
 						$rows = array();
-						$rows[] = $this->text_row( "feed_prolog", "Content to put in front of list", "", "feed_prolog", $options['feed_prolog'] );
+						$rows[] = $this->text_row( "feed_prolog", self::PROLOG_LABEL, "", "feed_prolog", $options['feed_prolog'] );
 						$rows[] = $this->style_row( "style_type", "feed", $options );
-						$rows[] = $this->text_row( "feed_minlinks", "Minimum links", "Minimum number of links to display LinkList", "feed_minlinks", $options['feed_minlinks'] );
+						$rows[] = $this->text_row( "feed_minlinks", self::MINLINKS_LABEL, self::MINLINKS_DESC, "feed_minlinks", $options['feed_minlinks'] );
 						$rows[] = $this->checkbox_row( "feed_sortlinks", "Sorting", "", __( 'Sort links alphabetically', 'linklist' ), 'feed_sort', $options );
 
 						$this->postbox('linklist_feed','Feed settings',$this->form_table($rows));
@@ -316,5 +320,5 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 		</div>
 <?php		}
 	} //class
-	$linklist_admin = new LinkList_Admin();
+	$linklist_admin = new LinkListAdmin();
 } //if
