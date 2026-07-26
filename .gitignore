@@ -1,3 +1,12 @@
 node_modules/
 vendor/
 .phpunit.cache/
+
+# Environment variables
+/.env
+
+# SonarCloud / SonarQube
+.sonar/
+.scannerwork/
+bin/reports/
+/bin/sonar-project.properties

@@ -40,5 +40,10 @@ export default defineConfig( {
 		setupFiles: [ './tests/js/setup.js' ],
 		include: [ 'tests/js/**/*.test.{js,jsx}' ],
 		globals: false,
+		coverage: {
+			provider: 'v8',
+			reporter: [ 'lcov', 'text' ],
+			reportsDirectory: 'bin/reports/coverage-js',
+		},
 	},
 } );
