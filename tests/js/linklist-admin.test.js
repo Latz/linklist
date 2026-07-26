@@ -5,11 +5,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import jQuery from 'jquery';
 
 // linklist.js is a legacy, non-module admin script written for a classic
-// <script> tag: it assigns to undeclared globals ($j, linklist_display,
-// state) and reads jQuery/ajaxurl/inlineEditPost off the global scope.
-// Importing it as an ES module would run it in strict mode and throw on
-// those bare assignments, so it's executed via `new Function` instead,
-// which mirrors how a browser runs a plain inline script.
+// <script> tag: it reads jQuery/ajaxurl/inlineEditPost off the global
+// scope rather than importing them. Importing it as an ES module would
+// require those as real module imports, so it's executed via `new
+// Function` instead, which mirrors how a browser runs a plain inline
+// script that expects those as globals.
 const __dirname = path.dirname( fileURLToPath( import.meta.url ) );
 const scriptSource = readFileSync(
 	path.resolve( __dirname, '../../linklist.js' ),
@@ -40,7 +40,7 @@ describe( 'bulk edit', () => {
 					<div id="ttle202">Post 202</div>
 				</div>
 			</div>
-			<select id="linklist-selectbox">
+			<select id="linklist-bulk-selectbox">
 				<option value="yes">Display</option>
 				<option value="no">Hide</option>
 			</select>
@@ -52,7 +52,7 @@ describe( 'bulk edit', () => {
 		const ajaxSpy = vi.spyOn( jQuery, 'ajax' ).mockImplementation( () => {} );
 		runAdminScript( { edit: vi.fn(), getId: vi.fn() } );
 
-		jQuery( '#linklist-selectbox' ).val( 'yes' );
+		jQuery( '#linklist-bulk-selectbox' ).val( 'yes' );
 		document.getElementById( 'bulk_edit' ).click();
 
 		expect( ajaxSpy ).toHaveBeenCalledTimes( 1 );
@@ -73,7 +73,7 @@ describe( 'bulk edit', () => {
 		const ajaxSpy = vi.spyOn( jQuery, 'ajax' ).mockImplementation( () => {} );
 		runAdminScript( { edit: vi.fn(), getId: vi.fn() } );
 
-		jQuery( '#linklist-selectbox' ).val( 'no' );
+		jQuery( '#linklist-bulk-selectbox' ).val( 'no' );
 		document.getElementById( 'bulk_edit' ).click();
 
 		expect( ajaxSpy ).toHaveBeenCalledWith(

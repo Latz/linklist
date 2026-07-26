@@ -163,14 +163,14 @@ if ( !class_exists('LinkList') ) {
 				case 'rbul': $start = "<ul>";
 										 $end   = "</ul>";
 										 break;
-		        case 'rbol':
-		        default: $start = "<ol>";
-					 					 $end   = "</ol>";
-										 break;
 				case 'rbli': $start = "";
 										 $end   = "";
 										 $del_start = "";
 	  								 $del_end = $opt('sep');
+										 break;
+		        case 'rbol':
+		        default: $start = "<ol>";
+					 					 $end   = "</ol>";
 										 break;
 		  } //switch
 
@@ -380,11 +380,11 @@ function linklist_AddMetaBox() {
 
 }
 /* --------------------------------------------------------------------------- */
-function save_linklist_meta_box($post_id, $post, $update) {
+function save_linklist_meta_box($post_id) {
 
 	// check if the form was submitted corrected
 	if  ( (! isset($_POST["linklist-meta-box-nonce"])   || (! wp_verify_nonce($_POST["linklist-meta-box-nonce"], basename(__FILE__))))
-	     and (! isset($_POST["linklist-quick-edit-nonce"]) || (! wp_verify_nonce($_POST["linklist-quick-edit-nonce"], basename(__FILE__))))
+	     && (! isset($_POST["linklist-quick-edit-nonce"]) || (! wp_verify_nonce($_POST["linklist-quick-edit-nonce"], basename(__FILE__))))
 		) {
 			return $post_id;
 	}
@@ -459,7 +459,7 @@ function linklist_add_to_bulk_edit_custom_box($column_name, $post_type) {
 			<label>
 				<span class="title">Linklist</span>
 
-				<select name="linklist-selectbox" id="linklist-selectbox">
+				<select name="linklist-selectbox" id="linklist-bulk-selectbox">
 					<option value="nochange" selected="selected">&mdash; No Change &mdash;</option>
 					<option value="yes"> <?php _e('Display'); ?></option>
 					<option value="no"> <?php _e('Hide'); ?></option>
@@ -478,7 +478,7 @@ function linklist_enqueue_edit_scripts() {
 /* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_save_bulk_edit() {
 	$post_ids = ( isset( $_POST[ 'post_ids' ] ) && !empty( $_POST[ 'post_ids' ] ) ) ? $_POST[ 'post_ids' ] : array();
-	$linklist_state = ( isset( $_POST[ 'linklist_state' ] ) && !empty( $_POST[ 'linklist_state' ] ) ) ? $_POST[ 'linklist_state' ] : NULL;
+	$linklist_state = ( isset( $_POST[ 'linklist_state' ] ) && !empty( $_POST[ 'linklist_state' ] ) ) ? $_POST[ 'linklist_state' ] : null;
 
 	if (empty ($post_ids)) {
 		return;
@@ -502,7 +502,7 @@ if (is_admin()) {
 
 	// add per post display support
 	add_action( 'add_meta_boxes', 'linklist_AddMetaBox');
-	add_action( "save_post", "save_linklist_meta_box", 10, 3);
+	add_action( "save_post", "save_linklist_meta_box", 10, 1);
 	add_filter( 'manage_posts_columns', 'linklist_add_posts_column', 10, 2 );
 	add_action( 'manage_posts_custom_column', 'linklist_populate_columns', 10, 2 );
 	add_action( 'bulk_edit_custom_box', 'linklist_add_to_bulk_quick_edit_custom_box', 10, 2 );

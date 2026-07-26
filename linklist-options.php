@@ -140,8 +140,6 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
                          'exceptions', // divs or spans excepted from link harvest
 						);
 
-        $option_priority = 10;
-
 		if ( isset($_POST['submit']) ) {
 			if (!current_user_can('manage_options')) {
 				wp_die(__('You cannot edit the LinkList options.'));
@@ -154,12 +152,8 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 		   }
 
             // convert string list to array for easier access in main plugin
-            // TODO: array_map()
             if (isset($ll_options['exceptions'])) {
-                $ll_options['exceptions'] = explode( ',', $ll_options['exceptions']);
-                for ($i=0; $i<sizeof($ll_options['exceptions']); $i++) {
-                    $ll_options['exceptions'][$i] = trim($ll_options['exceptions'][$i]);
-                }
+                $ll_options['exceptions'] = array_map( 'trim', explode( ',', $ll_options['exceptions'] ) );
             }
 			update_option('linklist', $ll_options);
 

@@ -12,8 +12,9 @@ reusing the LinkList/SingleLinkList/PageLinkList classes from linklist.php.
 function linklist_register_block() {
 	$build_dir = __DIR__ . '/build';
 
-	if ( ! file_exists( $build_dir . '/block.json' ) )
+	if ( ! file_exists( $build_dir . '/block.json' ) ) {
 		return;
+	}
 
 	register_block_type( $build_dir, array(
 		'render_callback' => 'linklist_render_block',
@@ -32,35 +33,43 @@ add_action( 'init', 'linklist_register_block' );
 function linklist_render_block( $attributes ) {
 	global $post;
 
-	if ( ! $post )
+	if ( ! $post ) {
 		return '';
+	}
 
-	if ( $post->post_type === 'page' )
+	if ( $post->post_type === 'page' ) {
 		$linklist = new PageLinkList( $post->post_content );
-	else
+	} else {
 		$linklist = new SingleLinkList( $post->post_content );
+	}
 
-	if ( $linklist->stopCreate() )
+	if ( $linklist->stopCreate() ) {
 		return '';
+	}
 
 	$overrides = array();
 
-	if ( ! empty( $attributes['style'] ) )
+	if ( ! empty( $attributes['style'] ) ) {
 		$overrides['style'] = $attributes['style'];
+	}
 
-	if ( ! empty( $attributes['prolog'] ) )
+	if ( ! empty( $attributes['prolog'] ) ) {
 		$overrides['prolog'] = $attributes['prolog'];
+	}
 
-	if ( ! empty( $attributes['sep'] ) )
+	if ( ! empty( $attributes['sep'] ) ) {
 		$overrides['sep'] = $attributes['sep'];
+	}
 
-	if ( isset( $attributes['sort'] ) && $attributes['sort'] === 'on' )
+	if ( isset( $attributes['sort'] ) && $attributes['sort'] === 'on' ) {
 		$overrides['sort'] = 'on';
-	elseif ( isset( $attributes['sort'] ) && $attributes['sort'] === 'off' )
+	} elseif ( isset( $attributes['sort'] ) && $attributes['sort'] === 'off' ) {
 		$overrides['sort'] = false;
+	}
 
-	if ( isset( $attributes['minlinks'] ) && (int) $attributes['minlinks'] >= 0 )
+	if ( isset( $attributes['minlinks'] ) && (int) $attributes['minlinks'] >= 0 ) {
 		$overrides['minlinks'] = (int) $attributes['minlinks'];
+	}
 
 	return $linklist->buildList( $overrides );
 }
