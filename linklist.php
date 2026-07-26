@@ -377,11 +377,22 @@ function linklist_CreateMetaBoxContent($object) {
 	printf('&nbsp%s</label>', esc_html__('Display Linklist', 'linklist'));
 }
 /* --------------------------------------------------------------------------- */
+/**
+ * Whether LinkList is active for the given post type, per the plugin's
+ * General settings (post_active/page_active in get_option('linklist')).
+ */
+function linklist_is_type_active( $post_type ) {
+	$options = get_option( 'linklist' );
+	return ! empty( $options[ $post_type . '_active' ] );
+}
+/* --------------------------------------------------------------------------- */
 function linklist_AddMetaBox() {
 
 	$screens = array( 'post', 'page' );
 	foreach ( $screens as $screen ) {
-		add_meta_box('linklist-meta-box', 'Linklist', 'linklist_CreateMetaBoxContent', $screen, 'side', 'default', null);
+		if ( linklist_is_type_active( $screen ) ) {
+			add_meta_box('linklist-meta-box', 'Linklist', 'linklist_CreateMetaBoxContent', $screen, 'side', 'default', null);
+		}
 	}
 
 }
@@ -416,8 +427,7 @@ function linklist_save_meta_box($post_id) {
 }
 /* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_add_posts_column( $columns, $post_type ) {
-	$types = array('post', 'page');
-	if (in_array( $post_type, $types) ) {
+	if ( linklist_is_type_active( $post_type ) ) {
 		$columns[ 'linklist' ] = 'Linklist';
 	}
 	return $columns;
@@ -441,8 +451,7 @@ global $post_id;
 
 	wp_nonce_field(basename(__FILE__), "linklist-quick-edit-nonce");
 
-	$types = array('post', 'page');
-	if (in_array( $post_type, $types) ) {
+	if ( linklist_is_type_active( $post_type ) ) {
 		?><fieldset class="inline-edit-col-right">
 			<div class="inline-edit-group">
 				<label>
@@ -465,8 +474,7 @@ function linklist_add_to_bulk_edit_custom_box($column_name, $post_type) {
 
 	wp_nonce_field(basename(__FILE__), "linklist-quick-edit-nonce");
 
-	$types = array('post', 'page');
-	if (in_array( $post_type, $types) ) {
+	if ( linklist_is_type_active( $post_type ) ) {
 		?><fieldset class="inline-edit-col-right">
 		<div class="inline-edit-group">
 			<label>
