@@ -1,0 +1,27 @@
+# Vulnerability scanning includes dev/test dependencies (package.json
+# devDependencies: vitest, @testing-library/*, jquery, jsdom, etc.). None
+# of this ships with the distributed plugin, but it's still real
+# supply-chain exposure for anyone running the dev toolchain, so it's in
+# scope here.
+#
+# Run manually via bin/trivy-check.sh. Not wired into any CI gate.
+pkg:
+  include-dev-deps: true
+
+scan:
+  scanners:
+    - vuln
+    - secret
+    - misconfig
+  skip-dirs:
+    - vendor
+    - node_modules
+    - build
+    - bin/reports
+    - .scannerwork
+
+severity:
+  - HIGH
+  - CRITICAL
+
+exit-code: 1

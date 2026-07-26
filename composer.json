@@ -9,7 +9,9 @@
     "require-dev": {
         "pestphp/pest": "^3.0",
         "brain/monkey": "^2.6",
-        "mockery/mockery": "^1.6"
+        "mockery/mockery": "^1.6",
+        "phpstan/phpstan": "^2.2",
+        "szepeviktor/phpstan-wordpress": "^2.0"
     },
     "autoload-dev": {
         "psr-4": {
@@ -17,7 +19,8 @@
         }
     },
     "scripts": {
-        "test": "pest"
+        "test": "pest",
+        "phpstan": "phpstan analyse"
     },
     "config": {
         "allow-plugins": {

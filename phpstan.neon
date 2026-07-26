@@ -1,0 +1,14 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 5
+    phpVersion: 80200
+    stubFiles:
+        - phpstan-stubs/wp-html-processor.stub.php
+    paths:
+        - linklist.php
+        - linklist-options.php
+        - render.php
+    excludePaths:
+        - tests

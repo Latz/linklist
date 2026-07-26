@@ -134,7 +134,7 @@ if ( !class_exists('LinkList') ) {
 		public function buildList($overrides = array()) {
 
 			$opt = function($key) use ($overrides) {
-				return (isset($overrides[$key]) && $overrides[$key] !== '' && $overrides[$key] !== null)
+				return (isset($overrides[$key]) && $overrides[$key] !== '')
 					? $overrides[$key]
 					: $this->options[$this->prefix . $key];
 			};
@@ -505,7 +505,6 @@ if (is_admin()) {
 	add_action( "save_post", "save_linklist_meta_box", 10, 1);
 	add_filter( 'manage_posts_columns', 'linklist_add_posts_column', 10, 2 );
 	add_action( 'manage_posts_custom_column', 'linklist_populate_columns', 10, 2 );
-	add_action( 'bulk_edit_custom_box', 'linklist_add_to_bulk_quick_edit_custom_box', 10, 2 );
 	add_action( 'quick_edit_custom_box', 'linklist_add_to_quick_edit_custom_box', 10, 2 );
 	add_action( 'bulk_edit_custom_box', 'linklist_add_to_bulk_edit_custom_box', 10, 2 );
 	add_action( 'admin_print_scripts-edit.php', 'linklist_enqueue_edit_scripts' );
