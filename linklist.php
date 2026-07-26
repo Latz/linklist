@@ -300,7 +300,7 @@ if ( !class_exists('BasicLinkList') ) {
 	} //class BasicLinkList
 } //if
 /* =========================================================================== */
-function create_linklist($content) {
+function linklist_create_linklist($content) {
  global $options, $post;
 
  // the Link List block already renders the list in place; don't also append it
@@ -320,11 +320,11 @@ function create_linklist($content) {
 
 return $linklist->createLinkList();
 
-}  //create_linklist
+}  //linklist_create_linklist
 
 
 /* --------------------------------------------------------------------------- */
-function llactivate() {
+function linklist_activate() {
 
 	if (get_option('linklist')) {
 	  return;
@@ -386,7 +386,7 @@ function linklist_AddMetaBox() {
 
 }
 /* --------------------------------------------------------------------------- */
-function save_linklist_meta_box($post_id) {
+function linklist_save_meta_box($post_id) {
 
 	// check if the form was submitted corrected
 	$meta_box_nonce   = isset($_POST["linklist-meta-box-nonce"]) ? sanitize_text_field(wp_unslash($_POST["linklist-meta-box-nonce"])) : '';
@@ -516,11 +516,11 @@ require_once 'render.php';
 
 if (is_admin()) {
     require_once 'linklist-options.php';
-	register_activation_hook( __FILE__, 'llactivate' );
+	register_activation_hook( __FILE__, 'linklist_activate' );
 
 	// add per post display support
 	add_action( 'add_meta_boxes', 'linklist_AddMetaBox');
-	add_action( "save_post", "save_linklist_meta_box", 10, 1);
+	add_action( "save_post", "linklist_save_meta_box", 10, 1);
 	add_filter( 'manage_posts_columns', 'linklist_add_posts_column', 10, 2 );
 	add_action( 'manage_posts_custom_column', 'linklist_populate_columns', 10, 2 );
 	add_action( 'quick_edit_custom_box', 'linklist_add_to_quick_edit_custom_box', 10, 2 );
@@ -534,4 +534,4 @@ if (! $linklist_priority) {
     $linklist_priority = 10;
 }
 
-add_filter('the_content', 'create_linklist', $linklist_priority);
+add_filter('the_content', 'linklist_create_linklist', $linklist_priority);

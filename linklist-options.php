@@ -44,6 +44,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 		}
 
 		public function config_page_scripts() {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only check of which admin page is loaded, to decide what to enqueue; no form data is being processed, so no nonce applies.
 			if ( isset( $_GET['page'] ) && $_GET['page'] == $this->hook ) {
 				wp_enqueue_script( 'postbox' );
 				wp_enqueue_script( 'dashboard' );
@@ -53,6 +54,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 		}
 
 		public function config_page_styles() {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only check of which admin page is loaded, to decide what to enqueue; no form data is being processed, so no nonce applies.
 			if ( isset( $_GET['page'] ) && $_GET['page'] == $this->hook ) {
 				wp_enqueue_style( 'dashboard' );
 				wp_enqueue_style( 'thickbox' );
