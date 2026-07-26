@@ -21,9 +21,10 @@ function runAdminScript( inlineEditPost ) {
 	window.$ = jQuery;
 	window.ajaxurl = 'http://example.test/wp-admin/admin-ajax.php';
 	window.inlineEditPost = inlineEditPost;
+	window.linklistBulkEdit = { nonce: 'test-nonce' };
 
-	const run = new Function( 'jQuery', 'ajaxurl', 'inlineEditPost', scriptSource );
-	run( jQuery, window.ajaxurl, inlineEditPost );
+	const run = new Function( 'jQuery', 'ajaxurl', 'inlineEditPost', 'linklistBulkEdit', scriptSource );
+	run( jQuery, window.ajaxurl, inlineEditPost, window.linklistBulkEdit );
 }
 
 beforeEach( () => {
@@ -62,6 +63,7 @@ describe( 'bulk edit', () => {
 				type: 'POST',
 				data: {
 					action: 'linklist_save_bulk_edit',
+					nonce: 'test-nonce',
 					post_ids: [ '101', '202' ],
 					linklist_state: 'yes',
 				},

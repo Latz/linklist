@@ -3,14 +3,20 @@
 Plugin Name: LinkList
 Description: Adds a list of mentioned links at the end of the post, page or feed.
 Plugin URI: http://wordpress.org/extend/plugins/linklist/
-Version: 0.6
+Version: 0.7
 Requires at least: 6.4
-Tested up to: 6.6
+Tested up to: 7.0
 Stable tag: trunk
 Text Domain: linklist
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Author: Lutz Schr&ouml;er
 Author URI: http://elektroelch.net/blog
 */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -368,7 +374,7 @@ function linklist_CreateMetaBoxContent($object) {
 		echo '<label for="linklist-display"><input id="linklist-display" name="linklist-display" type="checkbox" value="true"  checked="checked">';
 	}
 
-	printf('&nbsp%s</label>', __('Display Linklist'));
+	printf('&nbsp%s</label>', esc_html__('Display Linklist', 'linklist'));
 }
 /* --------------------------------------------------------------------------- */
 function linklist_AddMetaBox() {
@@ -383,8 +389,10 @@ function linklist_AddMetaBox() {
 function save_linklist_meta_box($post_id) {
 
 	// check if the form was submitted corrected
-	if  ( (! isset($_POST["linklist-meta-box-nonce"])   || (! wp_verify_nonce($_POST["linklist-meta-box-nonce"], basename(__FILE__))))
-	     && (! isset($_POST["linklist-quick-edit-nonce"]) || (! wp_verify_nonce($_POST["linklist-quick-edit-nonce"], basename(__FILE__))))
+	$meta_box_nonce   = isset($_POST["linklist-meta-box-nonce"]) ? sanitize_text_field(wp_unslash($_POST["linklist-meta-box-nonce"])) : '';
+	$quick_edit_nonce = isset($_POST["linklist-quick-edit-nonce"]) ? sanitize_text_field(wp_unslash($_POST["linklist-quick-edit-nonce"])) : '';
+	if  ( (! $meta_box_nonce   || (! wp_verify_nonce($meta_box_nonce, basename(__FILE__))))
+	     && (! $quick_edit_nonce || (! wp_verify_nonce($quick_edit_nonce, basename(__FILE__))))
 		) {
 			return $post_id;
 	}
@@ -400,7 +408,8 @@ function save_linklist_meta_box($post_id) {
 	// save quick edit data
 	if (isset($_POST["linklist-quick-edit-nonce"])) // save quick edit
 	{
-		update_post_meta($post_id, 'linklist-display', 'yes' == $_POST['linklist-selectbox'] ? 1:0);
+		$selectbox_value = isset($_POST['linklist-selectbox']) ? sanitize_text_field(wp_unslash($_POST['linklist-selectbox'])) : '';
+		update_post_meta($post_id, 'linklist-display', 'yes' == $selectbox_value ? 1:0);
 	} else { // save edit post page
 		update_post_meta($post_id, 'linklist-display', isset($_POST['linklist-display']) ? 1 : 0);
 	}
@@ -415,11 +424,15 @@ function linklist_add_posts_column( $columns, $post_type ) {
 }/* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_populate_columns( $column_name, $post_id) {
 	if ($column_name == 'linklist') {
-		$id      = sprintf('id="linklist-%s"', $post_id);
-		$image   = sprintf('<img src="%s" %s height="24" width="24">', plugins_url( 'check.png', __FILE__ ), $id);
+		$post_id = absint( $post_id );
+		$image   = sprintf(
+			'<img src="%s" id="linklist-%d" height="24" width="24">',
+			esc_url( plugins_url( 'check.png', __FILE__ ) ),
+			$post_id
+		);
 		$display = get_post_meta($post_id, 'linklist-display', true) == ('0'|'') ? '': $image;
 
-		printf('<div id="linklist-%s">%s</div>', $post_id, $display);
+		printf('<div id="linklist-%d">%s</div>', $post_id, $display); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $display is pre-built HTML (an <img> tag with esc_url()'d src and an integer id) from trusted, developer-authored sources, not user input.
 	} //if
 } //link_list_populate_columns
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -436,8 +449,8 @@ global $post_id;
 					<span class="title">Linklist</span>
 
 					<select name="linklist-selectbox" id="linklist-selectbox">
-					<option value="yes"> <?php _e('Display'); ?></option>
-					<option value="no"> <?php _e('Hide'); ?></option>
+					<option value="yes"> <?php esc_html_e('Display', 'linklist'); ?></option>
+					<option value="no"> <?php esc_html_e('Hide', 'linklist'); ?></option>
 					</select>
 
 
@@ -461,8 +474,8 @@ function linklist_add_to_bulk_edit_custom_box($column_name, $post_type) {
 
 				<select name="linklist-selectbox" id="linklist-bulk-selectbox">
 					<option value="nochange" selected="selected">&mdash; No Change &mdash;</option>
-					<option value="yes"> <?php _e('Display'); ?></option>
-					<option value="no"> <?php _e('Hide'); ?></option>
+					<option value="yes"> <?php esc_html_e('Display', 'linklist'); ?></option>
+					<option value="no"> <?php esc_html_e('Hide', 'linklist'); ?></option>
 				</select>
 
 
@@ -473,12 +486,17 @@ function linklist_add_to_bulk_edit_custom_box($column_name, $post_type) {
 }
 /* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_enqueue_edit_scripts() {
-	wp_enqueue_script( 'linklist-admin-edit', plugins_url( 'linklist.js', __FILE__ ), array( 'jquery', 'inline-edit-post' ), '', true );
+	wp_enqueue_script( 'linklist-admin-edit', plugins_url( 'linklist.js', __FILE__ ), array( 'jquery', 'inline-edit-post' ), '0.7', true );
+	wp_localize_script( 'linklist-admin-edit', 'linklistBulkEdit', array(
+		'nonce' => wp_create_nonce( 'linklist_save_bulk_edit' ),
+	) );
 }
 /* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_save_bulk_edit() {
-	$post_ids = ( isset( $_POST[ 'post_ids' ] ) && !empty( $_POST[ 'post_ids' ] ) ) ? $_POST[ 'post_ids' ] : array();
-	$linklist_state = ( isset( $_POST[ 'linklist_state' ] ) && !empty( $_POST[ 'linklist_state' ] ) ) ? $_POST[ 'linklist_state' ] : null;
+	check_ajax_referer( 'linklist_save_bulk_edit', 'nonce' );
+
+	$post_ids = isset( $_POST[ 'post_ids' ] ) ? array_map( 'absint', (array) wp_unslash( $_POST[ 'post_ids' ] ) ) : array();
+	$linklist_state = isset( $_POST[ 'linklist_state' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'linklist_state' ] ) ) : '';
 
 	if (empty ($post_ids)) {
 		return;
@@ -511,9 +529,9 @@ if (is_admin()) {
 	add_action( 'wp_ajax_linklist_save_bulk_edit', 'linklist_save_bulk_edit');
 }
 
-$priority = get_option('linklist_priority');
-if (! $priority) {
-    $priority = 10;
+$linklist_priority = get_option('linklist_priority');
+if (! $linklist_priority) {
+    $linklist_priority = 10;
 }
 
-add_filter('the_content', 'create_linklist', $priority);
+add_filter('the_content', 'create_linklist', $linklist_priority);

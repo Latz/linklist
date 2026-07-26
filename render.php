@@ -4,6 +4,10 @@ render.php — registers the "Link List" Gutenberg block and renders it by
 reusing the LinkList/SingleLinkList/PageLinkList classes from linklist.php.
 --------------------------------------------------------------------------- */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
 /**
  * Registers the linklist/linklist block from its build output.
  *

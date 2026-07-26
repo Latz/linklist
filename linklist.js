@@ -21,6 +21,7 @@ $j( '#bulk_edit' ).click( function() {
         cache: false,
         data: {
             action: 'linklist_save_bulk_edit',
+            nonce: linklistBulkEdit.nonce,
             post_ids: $post_ids,
             linklist_state: linklist_display
         }

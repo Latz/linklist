@@ -13,6 +13,14 @@
 
 uses(Tests\TestCase::class)->in('Unit');
 
+// linklist.php/linklist-options.php/render.php each start with an
+// `if ( ! defined( 'ABSPATH' ) ) exit;` direct-access guard; define it so
+// requiring those files during the bootstrap below doesn't silently exit
+// the whole test process.
+if ( ! defined( 'ABSPATH' ) ) {
+    define( 'ABSPATH', __DIR__ . '/../' );
+}
+
 /*
 |--------------------------------------------------------------------------
 | Plugin bootstrap

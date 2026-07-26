@@ -1,13 +1,16 @@
 === LinkList ===
 Contributors: Lutz Schroeer
 Tags: links
-Requires at least: 3.7
-Tested up to: 4.7.4
-Stable tag: trunk
+Requires at least: 6.4
+Tested up to: 7.0
+Stable tag: 0.7
 Author: Lutz Schroeer
-Version: 0.5
+Version: 0.7
 Author URI: http://elektroelch.de/blog/
-License: GPL
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+
+Adds a list of mentioned links at the end of the post, page or feed.
 
 == Description ==
 
