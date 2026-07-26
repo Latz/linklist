@@ -4,7 +4,7 @@ Plugin Name: LinkList
 Description: Adds a list of mentioned links at the end of the post, page or feed.
 Plugin URI: http://wordpress.org/extend/plugins/linklist/
 Version: 0.6
-Requires at least: 6.3
+Requires at least: 6.4
 Tested up to: 6.6
 Stable tag: trunk
 Text Domain: linklist
@@ -39,30 +39,50 @@ if ( !class_exists('LinkList') ) {
 		function linkExtractor($content){
 			global $post;
 
-            if (! empty($this->options['exceptions'])) {
-                // remove divs
-                $dom = new DOMDocument();
-                $dom->loadHTML($content);
-                $divs = $dom->getElementsByTagName('div');
-                foreach ($divs as $div) {
-                    if (in_array($div->getAttribute("class"), $this->options['exceptions']))
-                        $div->parentNode->removeChild($div);
-                } //foreach
-
-                // saveHTML() is adding some additional tags to the doc. Remove them:
-                $content = trim(preg_replace('/^<!DOCTYPE.+?>/', '', str_replace( array('<html>', '</html>', '<body>',
-                                             '</body>'), array('', '', '', ''), $dom->saveHTML())));
-            } //if
-
+			$processor = WP_HTML_Processor::create_fragment($content);
 			$linkArray = array();
-			if ( (preg_match_all('/<a\s+.*?href=[\"\']?([^\"\' >]*)[\"\']?[^>]*>(.*?)<\/a>/i',
-						$content,$matches,PREG_SET_ORDER)))
-				foreach($matches as $match) {
-				if ( (strpos($match[0], '<img') <= 0) // avoid pure image links
-					&& (strpos($match[0], '#more-'.$post->ID) <= 0)  // avoid <!--more--> links
-					&& (! in_array(array($match[1],$match[2]), $linkArray))) // avoid double entries
-						array_push($linkArray,array($match[1],$match[2]));
-			} //if
+			$excludedDivs = array(); // stack of bools: is each open DIV ancestor excluded?
+
+			while ($processor->next_token()) {
+				if ('#tag' !== $processor->get_token_type())
+					continue;
+
+				$tag = $processor->get_tag();
+
+				if ('DIV' === $tag) {
+					if ($processor->is_tag_closer())
+						array_pop($excludedDivs);
+					else
+						// exact match against the div's full class attribute, matching the
+						// previous DOMDocument-based behaviour (no per-class-token matching)
+						$excludedDivs[] = ! empty($this->options['exceptions'])
+							&& in_array($processor->get_attribute('class'), $this->options['exceptions']);
+					continue;
+				}
+
+				if ('A' !== $tag || $processor->is_tag_closer() || in_array(true, $excludedDivs, true))
+					continue;
+
+				$href = $processor->get_attribute('href');
+				if (! is_string($href))
+					continue;
+
+				// accumulate the link's inner HTML until its closing tag; HTML
+				// doesn't allow nested <a> elements, so the next </a> is always
+				// this anchor's own closer
+				$inner = '';
+				while ($processor->next_token()) {
+					if ('#tag' === $processor->get_token_type() && 'A' === $processor->get_tag() && $processor->is_tag_closer())
+						break;
+					$inner .= $processor->serialize_token();
+				}
+
+				if ( (strpos($inner, '<img') === false) // avoid pure image links
+					&& (strpos($href, '#more-'.$post->ID) === false)  // avoid <!--more--> links
+					&& (! in_array(array($href, $inner), $linkArray))) // avoid double entries
+						array_push($linkArray, array($href, $inner));
+			} //while
+
 		 return $linkArray;
 		} //linkExtractor()
 		/* ------------------------------------------------------------------------ */
@@ -143,7 +163,7 @@ if ( !class_exists('LinkList') ) {
 
 		  $list .= $start;
 		  foreach ($this->linklist as $link)
-		    $list .= $del_start . '<a href="' . $link[0] . '">' . $link[1].'</a>'.$del_end;
+		    $list .= $del_start . '<a href="' . esc_url($link[0]) . '">' . $link[1].'</a>'.$del_end;
 
 		  // remove last separator
 		  if ($opt('style') == "rbli")
@@ -232,7 +252,7 @@ if ( !class_exists('BasicLinkList') ) {
 		/* -------------------------------------------------------------------------- */
 		function hasMoreLink() {
 			global $post;
-			return strpos($post->post_content, '<!--more-->');
+			return '' !== get_extended( $post->post_content )['extended'];
 		}
  		/* ------------------------------------------------------------------------ */
 		function stopCreate() {

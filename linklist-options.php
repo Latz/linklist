@@ -130,12 +130,12 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
         $option_priority = 10;
 
 		if ( isset($_POST['submit']) ) {
-			if (!current_user_can('manage_options')) die(__('You cannot edit the LinkList options.'));
+			if (!current_user_can('manage_options')) wp_die(__('You cannot edit the LinkList options.'));
 			check_admin_referer('linklist-config');
 
 
 		   foreach($options as $option)
-			$ll_options[$option] = (isset  ($_POST [$option])) ? addslashes ( $_POST [$option] ) : '';
+			$ll_options[$option] = (isset  ($_POST [$option])) ? sanitize_text_field( wp_unslash( $_POST [$option] ) ) : '';
 
             // convert string list to array for easier access in main plugin
             // TODO: array_map()
@@ -147,7 +147,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 			update_option('linklist', $ll_options);
 
             if (isset($_POST['priority']))
-                update_option('linklist_priority', $_POST['priority']);
+                update_option('linklist_priority', absint($_POST['priority']));
 
 		}
 		$options  = get_option('linklist');
@@ -228,7 +228,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"label" => "Content to put in front of list",
 							"desc" => "",
 							"content" => '<input type="text" name="post_prolog" class="regular-text" value="' .
-										  stripslashes(htmlentities($options['post_prolog'])). '">'
+										  esc_attr($options['post_prolog']). '">'
 						);
 
 						$rows[] = array(
@@ -239,7 +239,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 										 $this->radiobutton('post_style', 'rbul', 'unordered list', $options) . "<br/>\n" .
 										 $this->radiobutton('post_style', 'rbli', 'char separated', $options) .
 										 '&nbsp;<input type="text" size="10" name="post_sep" value="' .
-										  stripslashes(htmlentities($options['post_sep'])). '">'
+										  esc_attr($options['post_sep']). '">'
 
 
 						);
@@ -249,7 +249,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"label" => "Minimum links",
 							"desc" => "Minimum number of links to display LinkList",
 							"content" => '<input type="text" name="post_minlinks" class="regular-text" value="' .
-										  stripslashes(htmlentities($options['post_minlinks'])). '">'
+										  esc_attr($options['post_minlinks']). '">'
 						);
 
 						$rows[] = array(
@@ -289,7 +289,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"label" => "Content to put in front of list",
 							"desc" => "",
 							"content" => '<input type="text" name="page_prolog" class="regular-text" value="' .
-										  stripslashes(htmlentities($options['page_prolog'])). '">'
+										  esc_attr($options['page_prolog']). '">'
 						);
 
 						$rows[] = array(
@@ -300,7 +300,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 										 $this->radiobutton('page_style', 'rbul', 'unordered list', $options) . "<br/>\n" .
 										 $this->radiobutton('page_style', 'rbli', 'char separated', $options) .
 										 '&nbsp;<input type="text" size="10" name="page_sep" value="' .
-										  stripslashes(htmlentities($options['page_sep'])). '">'
+										  esc_attr($options['page_sep']). '">'
 						);
 
 						$rows[] = array(
@@ -308,7 +308,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"label" => "Minimum links",
 							"desc" => "Minimum number of links to display LinkList",
 							"content" => '<input type="text" name="page_minlinks" class="regular-text" value="' .
-										  stripslashes(htmlentities($options['page_minlinks'])). '">'
+										  esc_attr($options['page_minlinks']). '">'
 						);
 
 						$rows[] = array(
@@ -334,7 +334,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"label" => "Content to put in front of list",
 							"desc" => "",
 							"content" => '<input type="text" name="feed_prolog" class="regular-text" value="' .
-										  stripslashes(htmlentities($options['feed_prolog'])). '">'
+										  esc_attr($options['feed_prolog']). '">'
 						);
 
 						$rows[] = array(
@@ -345,7 +345,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 										 $this->radiobutton('feed_style', 'rbul', 'unordered list', $options) . "<br/>\n" .
 										 $this->radiobutton('feed_style', 'rbli', 'char separated', $options) .
 										 '&nbsp;<input type="text" size="10" name="feed_sep" value="' .
-										  stripslashes(htmlentities($options['feed_sep'])). '">'
+										  esc_attr($options['feed_sep']). '">'
 
 
 						);
@@ -355,7 +355,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 							"label" => "Minimum links",
 							"desc" => "Minimum number of links to display LinkList",
 							"content" => '<input type="text" name="feed_minlinks" class="regular-text" value="' .
-										  stripslashes(htmlentities($options['feed_minlinks'])). '">'
+										  esc_attr($options['feed_minlinks']). '">'
 						);
 
 						$rows[] = array(

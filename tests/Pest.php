@@ -25,9 +25,73 @@ uses(Tests\TestCase::class)->in('Unit');
 | doesn't fatal. is_admin() is stubbed false so linklist-options.php never
 | loads — none of the classes under test live there.
 |
+| linkExtractor() also depends on the real WP_HTML_Processor (WP core, not
+| something Brain Monkey provides), so load that class family from the WP
+| install this plugin sits inside before requiring the plugin itself.
+|
 */
 
 (function () {
+    $wpIncludes = __DIR__ . '/../../../../wp-includes';
+
+    foreach ( array(
+        'class-wp-token-map.php',
+    ) as $file ) {
+        require_once $wpIncludes . '/' . $file;
+    }
+
+    foreach ( array(
+        'class-wp-html-token.php',
+        'class-wp-html-span.php',
+        'class-wp-html-text-replacement.php',
+        'class-wp-html-attribute-token.php',
+        'class-wp-html-decoder.php',
+        'class-wp-html-doctype-info.php',
+        'class-wp-html-unsupported-exception.php',
+        'class-wp-html-active-formatting-elements.php',
+        'class-wp-html-open-elements.php',
+        'class-wp-html-stack-event.php',
+        'class-wp-html-processor-state.php',
+        'class-wp-html-tag-processor.php',
+        'class-wp-html-processor.php',
+        'html5-named-character-references.php',
+    ) as $file ) {
+        require_once $wpIncludes . '/html-api/' . $file;
+    }
+
+    // WP_HTML_Processor/WP_HTML_Tag_Processor internally call a handful of
+    // WordPress functions (translation/escaping helpers, not anything under
+    // test) outside of any per-test Brain Monkey lifecycle, so they need
+    // real, permanent definitions rather than per-test stubs.
+    if ( ! function_exists( '__' ) ) {
+        function __( $text, $domain = 'default' ) { return $text; }
+    }
+    if ( ! function_exists( '_doing_it_wrong' ) ) {
+        function _doing_it_wrong( $function_name, $message, $version ) {}
+    }
+    if ( ! function_exists( 'esc_url' ) ) {
+        function esc_url( $url ) { return $url; }
+    }
+    // get_extended() (WP core, wp-includes/post.php) has no WP-function
+    // dependencies of its own, so it's cheaper to mirror its implementation
+    // here than to pull in the rest of post.php's dependency chain.
+    if ( ! function_exists( 'get_extended' ) ) {
+        function get_extended( $post ) {
+            if ( preg_match( '/<!--more(.*?)?-->/', $post, $matches ) ) {
+                list($main, $extended) = explode( $matches[0], $post, 2 );
+                $more_text = $matches[1];
+            } else {
+                $main = $post;
+                $extended = '';
+                $more_text = '';
+            }
+            $main = preg_replace( '/^[\s]*(.*)[\s]*$/', '\\1', $main );
+            $extended = preg_replace( '/^[\s]*(.*)[\s]*$/', '\\1', $extended );
+            $more_text = preg_replace( '/^[\s]*(.*)[\s]*$/', '\\1', $more_text );
+            return array( 'main' => $main, 'extended' => $extended, 'more_text' => $more_text );
+        }
+    }
+
     Brain\Monkey\setUp();
 
     Brain\Monkey\Functions\when('is_admin')->justReturn(false);
