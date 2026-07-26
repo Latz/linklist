@@ -386,11 +386,30 @@ function linklist_is_type_active( $post_type ) {
 	return ! empty( $options[ $post_type . '_active' ] );
 }
 /* --------------------------------------------------------------------------- */
-function linklist_AddMetaBox() {
+/**
+ * Whether the "Display Linklist" editor control should be shown: the type
+ * must be active per plugin settings, and either the active theme isn't a
+ * block theme, or (when a specific post is known) that post doesn't
+ * already contain the linklist/linklist block, mirroring the has_block()
+ * guard linklist_create_linklist() uses to skip the classic auto-append.
+ */
+function linklist_should_show_editor_control( $post_type, $post = null ) {
+	if ( ! linklist_is_type_active( $post_type ) ) {
+		return false;
+	}
+
+	if ( ! wp_is_block_theme() ) {
+		return true;
+	}
+
+	return $post && ! has_block( 'linklist/linklist', $post );
+}
+/* --------------------------------------------------------------------------- */
+function linklist_AddMetaBox( $post_type, $post = null ) {
 
 	$screens = array( 'post', 'page' );
 	foreach ( $screens as $screen ) {
-		if ( linklist_is_type_active( $screen ) ) {
+		if ( linklist_should_show_editor_control( $screen, $post ) ) {
 			add_meta_box('linklist-meta-box', 'Linklist', 'linklist_CreateMetaBoxContent', $screen, 'side', 'default', null);
 		}
 	}
@@ -451,7 +470,7 @@ global $post_id;
 
 	wp_nonce_field(basename(__FILE__), "linklist-quick-edit-nonce");
 
-	if ( linklist_is_type_active( $post_type ) ) {
+	if ( linklist_should_show_editor_control( $post_type ) ) {
 		?><fieldset class="inline-edit-col-right">
 			<div class="inline-edit-group">
 				<label>
@@ -474,7 +493,7 @@ function linklist_add_to_bulk_edit_custom_box($column_name, $post_type) {
 
 	wp_nonce_field(basename(__FILE__), "linklist-quick-edit-nonce");
 
-	if ( linklist_is_type_active( $post_type ) ) {
+	if ( linklist_should_show_editor_control( $post_type ) ) {
 		?><fieldset class="inline-edit-col-right">
 		<div class="inline-edit-group">
 			<label>
@@ -527,7 +546,7 @@ if (is_admin()) {
 	register_activation_hook( __FILE__, 'linklist_activate' );
 
 	// add per post display support
-	add_action( 'add_meta_boxes', 'linklist_AddMetaBox');
+	add_action( 'add_meta_boxes', 'linklist_AddMetaBox', 10, 2 );
 	add_action( "save_post", "linklist_save_meta_box", 10, 1);
 	add_filter( 'manage_posts_columns', 'linklist_add_posts_column', 10, 2 );
 	add_action( 'manage_posts_custom_column', 'linklist_populate_columns', 10, 2 );
