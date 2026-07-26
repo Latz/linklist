@@ -125,6 +125,45 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
         return trim($option);
     }
 
+		/**
+		 * Build a form_table() row containing a single checkbox.
+		 */
+		private function checkbox_row( $id, $label, $desc, $checkbox_label, $option_key, $options ) {
+			return array(
+				'id'      => $id,
+				'label'   => $label,
+				'desc'    => $desc,
+				'content' => $this->checkbox( $checkbox_label, $option_key, $options ),
+			);
+		}
+
+		/**
+		 * Build a form_table() row containing a single text input.
+		 */
+		private function text_row( $id, $label, $desc, $name, $value ) {
+			return array(
+				'id'      => $id,
+				'label'   => $label,
+				'desc'    => $desc,
+				'content' => '<input type="text" name="' . $name . '" class="regular-text" value="' . esc_attr( $value ) . '">',
+			);
+		}
+
+		/**
+		 * Build the "style of list" form_table() row (radio buttons + separator field) shared by posts/pages/feed.
+		 */
+		private function style_row( $id, $prefix, $options ) {
+			return array(
+				'id'      => $id,
+				'label'   => 'Style of list',
+				'desc'    => '',
+				'content' => $this->radiobutton( $prefix . '_style', 'rbol', __( 'ordered list', 'linklist' ), $options ) . "<br/>\n" .
+							 $this->radiobutton( $prefix . '_style', 'rbul', __( 'unordered list', 'linklist' ), $options ) . "<br/>\n" .
+							 $this->radiobutton( $prefix . '_style', 'rbli', __( 'char separated', 'linklist' ), $options ) .
+							 '&nbsp;<input type="text" size="10" name="' . $prefix . '_sep" value="' . esc_attr( $options[ $prefix . '_sep' ] ) . '">',
+			);
+		}
+
 	public function config_page() {
 
 		$options = array('post_active',	  'page_active',   'feed_active',
@@ -183,26 +222,9 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 						// ----------------------------------------------------------------------
 						$rows = array();
 
-						$rows[] = array(
-							"id" => "post_active",
-							"label" => "Display linklist in posts",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Display LinkList in posts', 'linklist' ), 'post_active', $options)
-						);
-
-						$rows[] = array(
-							"id" => "page_active",
-							"label" => "Display linklist in pages",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Display LinkList in pages', 'linklist' ), 'page_active', $options)
-						);
-
-						$rows[] = array(
-							"id" => "feed_active",
-							"label" => "Display linklist in feed",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Display LinkList in feed', 'linklist' ), 'feed_active', $options)
-						);
+						$rows[] = $this->checkbox_row( "post_active", "Display linklist in posts", "", __( 'Display LinkList in posts', 'linklist' ), 'post_active', $options );
+						$rows[] = $this->checkbox_row( "page_active", "Display linklist in pages", "", __( 'Display LinkList in pages', 'linklist' ), 'page_active', $options );
+						$rows[] = $this->checkbox_row( "feed_active", "Display linklist in feed", "", __( 'Display LinkList in feed', 'linklist' ), 'feed_active', $options );
 
                         $content = '<input type="text" name="exceptions" class="regular-text"';
                         // Condition necessary for updates
@@ -238,148 +260,32 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 
 						// ----------------------------------------------------------------------
 						$rows = array();
-						$rows[] = array(
-							"id" => "post_prolog",
-							"label" => "Content to put in front of list",
-							"desc" => "",
-							"content" => '<input type="text" name="post_prolog" class="regular-text" value="' .
-										  esc_attr($options['post_prolog']). '">'
-						);
-
-						$rows[] = array(
-							"id" => "style_type",
-							"label" => "Style of list",
-							"desc" => "",
-							"content" => $this->radiobutton('post_style', 'rbol', __( 'ordered list', 'linklist' ), $options) . "<br/>\n" .
-										 $this->radiobutton('post_style', 'rbul', __( 'unordered list', 'linklist' ), $options) . "<br/>\n" .
-										 $this->radiobutton('post_style', 'rbli', __( 'char separated', 'linklist' ), $options) .
-										 '&nbsp;<input type="text" size="10" name="post_sep" value="' .
-										  esc_attr($options['post_sep']). '">'
-
-
-						);
-
-						$rows[] = array(
-							"id" => "post_minlinks",
-							"label" => "Minimum links",
-							"desc" => "Minimum number of links to display LinkList",
-							"content" => '<input type="text" name="post_minlinks" class="regular-text" value="' .
-										  esc_attr($options['post_minlinks']). '">'
-						);
-
-						$rows[] = array(
-							"id" => "post_sortlinks",
-							"label" => "Sorting",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Sort links alphabetically', 'linklist' ), 'post_sort', $options)
-						);
-
-						$rows[] = array(
-							"id" => "post_more",
-							"label" => "More tag",
-							"desc" => '',
-							"content" => $this->checkbox( __( "Don't display if &lt;--more--&gt; tag is present", 'linklist' ), 'post_more', $options)
-						);
-
-						$rows[] = array(
-							"id" => "post_display",
-							"label" => "Single post",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Display only if single post is displayed (not on main blog page)', 'linklist' ), 'post_display', $options)
-						);
-
-						$rows[] = array(
-							"id" => "post_last",
-							"label" => "Last page only",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Display only on last page if post is splitted', 'linklist' ), 'post_last', $options)
-						);
+						$rows[] = $this->text_row( "post_prolog", "Content to put in front of list", "", "post_prolog", $options['post_prolog'] );
+						$rows[] = $this->style_row( "style_type", "post", $options );
+						$rows[] = $this->text_row( "post_minlinks", "Minimum links", "Minimum number of links to display LinkList", "post_minlinks", $options['post_minlinks'] );
+						$rows[] = $this->checkbox_row( "post_sortlinks", "Sorting", "", __( 'Sort links alphabetically', 'linklist' ), 'post_sort', $options );
+						$rows[] = $this->checkbox_row( "post_more", "More tag", '', __( "Don't display if &lt;--more--&gt; tag is present", 'linklist' ), 'post_more', $options );
+						$rows[] = $this->checkbox_row( "post_display", "Single post", "", __( 'Display only if single post is displayed (not on main blog page)', 'linklist' ), 'post_display', $options );
+						$rows[] = $this->checkbox_row( "post_last", "Last page only", "", __( 'Display only on last page if post is splitted', 'linklist' ), 'post_last', $options );
 
 						$this->postbox('linklist_posts','Posts settings',$this->form_table($rows));
 
 						// ----------------------------------------------------------------------
 						$rows = array();
-						$rows[] = array(
-							"id" => "page_prolog",
-							"label" => "Content to put in front of list",
-							"desc" => "",
-							"content" => '<input type="text" name="page_prolog" class="regular-text" value="' .
-										  esc_attr($options['page_prolog']). '">'
-						);
-
-						$rows[] = array(
-							"id" => "page_style",
-							"label" => "Style of list",
-							"desc" => "",
-							"content" => $this->radiobutton('page_style', 'rbol', __( 'ordered list', 'linklist' ), $options) . "<br/>\n" .
-										 $this->radiobutton('page_style', 'rbul', __( 'unordered list', 'linklist' ), $options) . "<br/>\n" .
-										 $this->radiobutton('page_style', 'rbli', __( 'char separated', 'linklist' ), $options) .
-										 '&nbsp;<input type="text" size="10" name="page_sep" value="' .
-										  esc_attr($options['page_sep']). '">'
-						);
-
-						$rows[] = array(
-							"id" => "page_minlinks",
-							"label" => "Minimum links",
-							"desc" => "Minimum number of links to display LinkList",
-							"content" => '<input type="text" name="page_minlinks" class="regular-text" value="' .
-										  esc_attr($options['page_minlinks']). '">'
-						);
-
-						$rows[] = array(
-							"id" => "page_sortlinks",
-							"label" => "Sorting",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Sort links alphabetically', 'linklist' ), 'page_sort', $options)
-						);
-
-						$rows[] = array(
-							"id" => "page_last",
-							"label" => "Last page only",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Display only on last page if post is splitted', 'linklist' ), 'page_last', $options)
-						);
+						$rows[] = $this->text_row( "page_prolog", "Content to put in front of list", "", "page_prolog", $options['page_prolog'] );
+						$rows[] = $this->style_row( "page_style", "page", $options );
+						$rows[] = $this->text_row( "page_minlinks", "Minimum links", "Minimum number of links to display LinkList", "page_minlinks", $options['page_minlinks'] );
+						$rows[] = $this->checkbox_row( "page_sortlinks", "Sorting", "", __( 'Sort links alphabetically', 'linklist' ), 'page_sort', $options );
+						$rows[] = $this->checkbox_row( "page_last", "Last page only", "", __( 'Display only on last page if post is splitted', 'linklist' ), 'page_last', $options );
 
 						$this->postbox('linklist_pages','Pages settings',$this->form_table($rows));
 
 						// ----------------------------------------------------------------------
 						$rows = array();
-						$rows[] = array(
-							"id" => "feed_prolog",
-							"label" => "Content to put in front of list",
-							"desc" => "",
-							"content" => '<input type="text" name="feed_prolog" class="regular-text" value="' .
-										  esc_attr($options['feed_prolog']). '">'
-						);
-
-						$rows[] = array(
-							"id" => "style_type",
-							"label" => "Style of list",
-							"desc" => "",
-							"content" => $this->radiobutton('feed_style', 'rbol', __( 'ordered list', 'linklist' ), $options) . "<br/>\n" .
-										 $this->radiobutton('feed_style', 'rbul', __( 'unordered list', 'linklist' ), $options) . "<br/>\n" .
-										 $this->radiobutton('feed_style', 'rbli', __( 'char separated', 'linklist' ), $options) .
-										 '&nbsp;<input type="text" size="10" name="feed_sep" value="' .
-										  esc_attr($options['feed_sep']). '">'
-
-
-						);
-
-						$rows[] = array(
-							"id" => "feed_minlinks",
-							"label" => "Minimum links",
-							"desc" => "Minimum number of links to display LinkList",
-							"content" => '<input type="text" name="feed_minlinks" class="regular-text" value="' .
-										  esc_attr($options['feed_minlinks']). '">'
-						);
-
-						$rows[] = array(
-							"id" => "feed_sortlinks",
-							"label" => "Sorting",
-							"desc" => "",
-							"content" => $this->checkbox( __( 'Sort links alphabetically', 'linklist' ), 'feed_sort', $options)
-						);
-
+						$rows[] = $this->text_row( "feed_prolog", "Content to put in front of list", "", "feed_prolog", $options['feed_prolog'] );
+						$rows[] = $this->style_row( "style_type", "feed", $options );
+						$rows[] = $this->text_row( "feed_minlinks", "Minimum links", "Minimum number of links to display LinkList", "feed_minlinks", $options['feed_minlinks'] );
+						$rows[] = $this->checkbox_row( "feed_sortlinks", "Sorting", "", __( 'Sort links alphabetically', 'linklist' ), 'feed_sort', $options );
 
 						$this->postbox('linklist_feed','Feed settings',$this->form_table($rows));
 
