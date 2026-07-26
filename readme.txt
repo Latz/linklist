@@ -185,6 +185,14 @@ You can programmatically change the content of the linklist by adding a filter:
 
       
 == Changelog ==
+= v0.7 =
++ Rewrote link extraction to use WordPress's own HTML parser (WP_HTML_Processor) instead of a regex/DOMDocument mix. Requires WordPress 6.4+ now.
++ Added an automated test suite (Pest for PHP, Vitest for JS) covering link extraction, list rendering, display gating, the block editor UI, and the admin quick/bulk-edit script.
+* Fixed a PHP 8+ fatal error when link sorting was enabled (the default)
+* Fixed a PHP 8.2+ deprecation notice
+* Switched to WordPress core sanitization/escaping functions throughout (wp_unslash, sanitize_text_field, esc_attr, esc_url, absint, wp_die, get_extended) instead of legacy PHP equivalents
+- Removed yst_plugin_tools.php, an unrelated helper class copied from an old Yoast plugin template
+
 = v0.5 =
 + Added display option for individual posts (inl. Quick and Bulk edit)
 
