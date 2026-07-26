@@ -208,7 +208,8 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 		?>
 		<div class="wrap">
 			<h2>LinkList options</h2>
-			<div class="postbox-container" style="width:70%;">
+			<div style="display: flex; gap: 20px; align-items: start;">
+			<div class="postbox-container" style="width: 70%;">
 				<div class="metabox-holder">
 					<div class="meta-box-sortables">
 						<form action="" method="post" id="linklist-conf">
@@ -299,7 +300,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 				</div>
 			</div>
 
-			<div class="postbox-container" style="width:20%;">
+			<div class="postbox-container" style="width: 20%;">
 				<div class="metabox-holder">
 					<div class="meta-box-sortables">
 						<?php
@@ -308,6 +309,7 @@ if ( ! class_exists( 'LinkList_Admin' ) ) {
 					</div>
 					<br/><br/><br/>
 				</div>
+			</div>
 			</div>
 
 
