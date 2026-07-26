@@ -256,17 +256,6 @@ if ( !class_exists('PageLinkList') ) {
 } //if
 
 /* =========================================================================== */
-if ( !class_exists('SingleLinkList') ) {
-	class SingleLinkList extends LinkList{
-
-		/* ------------------------------------------------------------------------ */
-		public function __construct($content) {
-			parent::__construct($content);
-			$this->prefix = 'post_';
-		}
-	} //class SingleLinkList
-} //if
-/* =========================================================================== */
 if ( !class_exists('FeedLinkList') ) {
 	class FeedLinkList extends LinkList {
 		/* ------------------------------------------------------------------------ */
@@ -316,6 +305,14 @@ if ( !class_exists('BasicLinkList') ) {
 			$this->prefix = 'post_';
 		}
 	} //class BasicLinkList
+} //if
+/* =========================================================================== */
+if ( !class_exists('SingleLinkList') ) {
+	// Same gating as BasicLinkList (post_active/post_more/post_display); the only
+	// difference is which context linklist_create_linklist() picks it for (single
+	// post view vs. archive/loop).
+	class SingleLinkList extends BasicLinkList {
+	} //class SingleLinkList
 } //if
 /* =========================================================================== */
 function linklist_create_linklist($content) {

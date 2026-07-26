@@ -60,6 +60,18 @@ it('returns an empty string when stopCreate() short-circuits', function () {
     expect(linklist_render_block([]))->toBe('');
 });
 
+it('returns an empty string for a post when posts are deactivated', function () {
+    global $post;
+    $post = (object) [
+        'ID' => 1,
+        'post_type' => 'post',
+        'post_content' => '<a href="https://a.test">A</a>',
+    ];
+    stubLinklistOptions(['post_active' => '']);
+
+    expect(linklist_render_block([]))->toBe('');
+});
+
 it('maps the style attribute to a buildList override', function () {
     global $post;
     $post = (object) [
