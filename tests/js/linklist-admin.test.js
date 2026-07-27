@@ -2,14 +2,13 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import jQuery from 'jquery';
 
 // linklist.js is a legacy, non-module admin script written for a classic
-// <script> tag: it reads jQuery/ajaxurl/inlineEditPost off the global
-// scope rather than importing them. Importing it as an ES module would
-// require those as real module imports, so it's executed via `new
-// Function` instead, which mirrors how a browser runs a plain inline
-// script that expects those as globals.
+// <script> tag: it reads ajaxurl/inlineEditPost off the global scope
+// rather than importing them. Importing it as an ES module would require
+// those as real module imports, so it's executed via `new Function`
+// instead, which mirrors how a browser runs a plain inline script that
+// expects those as globals.
 const __dirname = path.dirname( fileURLToPath( import.meta.url ) );
 const scriptSource = readFileSync(
 	path.resolve( __dirname, '../../linklist.js' ),
@@ -17,19 +16,18 @@ const scriptSource = readFileSync(
 );
 
 function runAdminScript( inlineEditPost ) {
-	window.jQuery = jQuery;
-	window.$ = jQuery;
 	window.ajaxurl = 'http://example.test/wp-admin/admin-ajax.php';
 	window.inlineEditPost = inlineEditPost;
 	window.linklistBulkEdit = { nonce: 'test-nonce' };
 
-	const run = new Function( 'jQuery', 'ajaxurl', 'inlineEditPost', 'linklistBulkEdit', scriptSource );
-	run( jQuery, window.ajaxurl, inlineEditPost, window.linklistBulkEdit );
+	const run = new Function( 'ajaxurl', 'inlineEditPost', 'linklistBulkEdit', scriptSource );
+	run( window.ajaxurl, inlineEditPost, window.linklistBulkEdit );
 }
 
 beforeEach( () => {
 	document.body.innerHTML = '';
 	vi.restoreAllMocks();
+	vi.unstubAllGlobals();
 } );
 
 describe( 'bulk edit', () => {
@@ -50,39 +48,38 @@ describe( 'bulk edit', () => {
 	} );
 
 	it( 'sends the selected post ids and linklist state to the ajax handler', () => {
-		const ajaxSpy = vi.spyOn( jQuery, 'ajax' ).mockImplementation( () => {} );
+		const fetchSpy = vi.fn().mockResolvedValue( {} );
+		vi.stubGlobal( 'fetch', fetchSpy );
 		runAdminScript( { edit: vi.fn(), getId: vi.fn() } );
 
-		jQuery( '#linklist-bulk-selectbox' ).val( 'yes' );
+		document.getElementById( 'linklist-bulk-selectbox' ).value = 'yes';
 		document.getElementById( 'bulk_edit' ).click();
 
-		expect( ajaxSpy ).toHaveBeenCalledTimes( 1 );
-		expect( ajaxSpy ).toHaveBeenCalledWith(
-			expect.objectContaining( {
-				url: 'http://example.test/wp-admin/admin-ajax.php',
-				type: 'POST',
-				data: {
-					action: 'linklist_save_bulk_edit',
-					nonce: 'test-nonce',
-					post_ids: [ '101', '202' ],
-					linklist_state: 'yes',
-				},
-			} )
+		expect( fetchSpy ).toHaveBeenCalledTimes( 1 );
+		const [ url, options ] = fetchSpy.mock.calls[ 0 ];
+		expect( url ).toBe( 'http://example.test/wp-admin/admin-ajax.php' );
+		expect( options.method ).toBe( 'POST' );
+		expect( options.body.toString() ).toBe(
+			new URLSearchParams( [
+				[ 'action', 'linklist_save_bulk_edit' ],
+				[ 'nonce', 'test-nonce' ],
+				[ 'linklist_state', 'yes' ],
+				[ 'post_ids[]', '101' ],
+				[ 'post_ids[]', '202' ],
+			] ).toString()
 		);
 	} );
 
 	it( 'reports the hide state when selected', () => {
-		const ajaxSpy = vi.spyOn( jQuery, 'ajax' ).mockImplementation( () => {} );
+		const fetchSpy = vi.fn().mockResolvedValue( {} );
+		vi.stubGlobal( 'fetch', fetchSpy );
 		runAdminScript( { edit: vi.fn(), getId: vi.fn() } );
 
-		jQuery( '#linklist-bulk-selectbox' ).val( 'no' );
+		document.getElementById( 'linklist-bulk-selectbox' ).value = 'no';
 		document.getElementById( 'bulk_edit' ).click();
 
-		expect( ajaxSpy ).toHaveBeenCalledWith(
-			expect.objectContaining( {
-				data: expect.objectContaining( { linklist_state: 'no' } ),
-			} )
-		);
+		const [ , options ] = fetchSpy.mock.calls[ 0 ];
+		expect( options.body.get( 'linklist_state' ) ).toBe( 'no' );
 	} );
 } );
 
@@ -107,7 +104,7 @@ describe( 'quick edit', () => {
 
 		expect( originalEdit ).toHaveBeenCalledWith( rowObject );
 		expect( getId ).toHaveBeenCalledWith( rowObject );
-		expect( jQuery( '#linklist-selectbox' ).val() ).toBe( 'yes' );
+		expect( document.getElementById( 'linklist-selectbox' ).value ).toBe( 'yes' );
 	} );
 
 	it( 'shows "no" when no linklist marker is present for the row', () => {
@@ -124,7 +121,7 @@ describe( 'quick edit', () => {
 
 		inlineEditPost.edit( {} );
 
-		expect( jQuery( '#linklist-selectbox' ).val() ).toBe( 'no' );
+		expect( document.getElementById( 'linklist-selectbox' ).value ).toBe( 'no' );
 	} );
 
 	it( 'does not compute a post id when called with a non-object id', () => {
@@ -143,6 +140,6 @@ describe( 'quick edit', () => {
 		inlineEditPost.edit( '123' );
 
 		expect( getId ).not.toHaveBeenCalled();
-		expect( jQuery( '#linklist-selectbox' ).val() ).toBe( 'yes' );
+		expect( document.getElementById( 'linklist-selectbox' ).value ).toBe( 'yes' );
 	} );
 } );

@@ -1,34 +1,32 @@
-const $j = jQuery.noConflict();
-
 /**
  * Submits the bulk-edit LinkList state for the selected posts via AJAX.
  * @listens click#bulk_edit
  */
-$j( '#bulk_edit' ).click( function () {
-	const $bulk_row = $j( '#bulk-edit' );
+document.getElementById( 'bulk_edit' )?.addEventListener( 'click', function () {
+	const bulk_row = document.getElementById( 'bulk-edit' );
 	const post_ids = [];
 
 	// get the IDs of the selected posts
-	$bulk_row.find( '#bulk-titles' ).children().each( function () {
-		post_ids.push( $j( this ).attr( 'id' ).replace( /^(ttle)/i, '' ) );
+	bulk_row.querySelectorAll( '#bulk-titles > *' ).forEach( function ( child ) {
+		post_ids.push( child.id.replace( /^(ttle)/i, '' ) );
 	} );
 
 	// get the desired state of linklist
-	const linklist_display = $j( '#linklist-bulk-selectbox' ).val();
+	const linklist_display = document.getElementById( 'linklist-bulk-selectbox' ).value;
 
 	// save the data
-	$j.ajax( {
-		url: ajaxurl,
-		type: 'POST',
-		async: false,
-		cache: false,
-		data: {
-			action: 'linklist_save_bulk_edit',
-			nonce: linklistBulkEdit.nonce,
-			post_ids,
-			linklist_state: linklist_display,
-		},
+	const body = new URLSearchParams( {
+		action: 'linklist_save_bulk_edit',
+		nonce: linklistBulkEdit.nonce,
+		linklist_state: linklist_display,
 	} );
+	post_ids.forEach( ( post_id ) => body.append( 'post_ids[]', post_id ) );
+
+	fetch( ajaxurl, {
+		method: 'POST',
+		cache: 'no-store',
+		body,
+	} ).catch( ( error ) => console.error( 'linklist bulk edit failed:', error ) );
 } );
 
 const $wp_inline_edit = inlineEditPost.edit;
@@ -43,7 +41,7 @@ inlineEditPost.edit = function ( id ) {
 
 	const post_id = typeof id === 'object' ? Number.parseInt( this.getId( id ), 10 ) : 0;
 	const linklist_display = `#linklist-${ post_id }`;
-	const state = $j( linklist_display ).html();
+	const state = document.querySelector( linklist_display )?.innerHTML;
 
-	$j( '#linklist-selectbox' ).val( state ? 'yes' : 'no' );
+	document.getElementById( 'linklist-selectbox' ).value = state ? 'yes' : 'no';
 };

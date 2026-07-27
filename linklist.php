@@ -549,7 +549,7 @@ function linklist_add_to_bulk_edit_custom_box($column_name, $post_type) {
 }
 /* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_enqueue_edit_scripts() {
-	wp_enqueue_script( 'linklist-admin-edit', plugins_url( 'linklist.js', __FILE__ ), array( 'jquery', 'inline-edit-post' ), '0.7', true );
+	wp_enqueue_script( 'linklist-admin-edit', plugins_url( 'linklist.js', __FILE__ ), array( 'inline-edit-post' ), '0.7', true );
 	wp_localize_script( 'linklist-admin-edit', 'linklistBulkEdit', array(
 		'nonce' => wp_create_nonce( 'linklist_save_bulk_edit' ),
 	) );
