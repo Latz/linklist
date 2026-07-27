@@ -59,20 +59,20 @@ describe('SingleLinkList::stopCreate', function () {
         expect($list->stopCreate())->toBe(1);
     });
 
-    it('stops when a more-tag is present and post_more is enabled', function () {
+    it('continues when a more-tag is present and post_more is enabled -- that setting only gates the archive/main-blog-page context', function () {
         global $post;
         $post = (object) ['post_content' => 'Intro text <!--more--> rest of post.'];
         stubLinklistOptions(['post_active' => 'on', 'post_more' => 'on']);
         $list = new SingleLinkList('content');
 
-        expect($list->stopCreate())->toBe(1);
+        expect($list->stopCreate())->toBe(0);
     });
 
-    it('stops when restricted to single post display', function () {
+    it('continues when restricted to single post display -- post_display only gates the archive/main-blog-page context', function () {
         stubLinklistOptions(['post_active' => 'on', 'post_more' => '', 'post_display' => 'on']);
         $list = new SingleLinkList('content');
 
-        expect($list->stopCreate())->toBe(1);
+        expect($list->stopCreate())->toBe(0);
     });
 
     it('continues by default', function () {

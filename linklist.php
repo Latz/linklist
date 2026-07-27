@@ -308,10 +308,16 @@ if ( !class_exists('BasicLinkList') ) {
 } //if
 /* =========================================================================== */
 if ( !class_exists('SingleLinkList') ) {
-	// Same gating as BasicLinkList (post_active/post_more/post_display); the only
-	// difference is which context linklist_create_linklist() picks it for (single
-	// post view vs. archive/loop).
+	// Extends BasicLinkList to reuse hasMoreLink()/the post_ prefix, but
+	// overrides stopCreate(): post_more/post_display are documented as
+	// "prevents display on the main blog page" -- they gate the archive/loop
+	// context (BasicLinkList), not the single-post permalink view or a
+	// manually-placed block, which only respect the post_active master toggle.
 	class SingleLinkList extends BasicLinkList {
+		/* ------------------------------------------------------------------------ */
+		public function stopCreate() {
+			return ! $this->options['post_active'] ? 1 : 0;
+		}
 	} //class SingleLinkList
 } //if
 /* =========================================================================== */
