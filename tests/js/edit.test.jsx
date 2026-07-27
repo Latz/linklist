@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Edit from '../../src/edit.js';
 
@@ -109,6 +109,45 @@ describe( 'Edit', () => {
 		expect( JSON.parse( preview.getAttribute( 'data-attributes' ) ) ).toMatchObject( {
 			style: 'rbol',
 			prolog: 'Custom:',
+		} );
+	} );
+
+	describe( 'server-side preview debouncing', () => {
+		afterEach( () => {
+			vi.useRealTimers();
+		} );
+
+		it( 'delays updating the preview until attribute changes settle', () => {
+			vi.useFakeTimers();
+			const setAttributes = vi.fn();
+			const defaultAttributes = {
+				style: '',
+				prolog: '',
+				sep: '',
+				sort: '',
+				minlinks: -1,
+			};
+
+			const { rerender } = render(
+				<Edit attributes={ defaultAttributes } setAttributes={ setAttributes } />
+			);
+
+			rerender(
+				<Edit
+					attributes={ { ...defaultAttributes, prolog: 'Updated' } }
+					setAttributes={ setAttributes }
+				/>
+			);
+
+			let preview = screen.getByTestId( 'server-side-render' );
+			expect( JSON.parse( preview.getAttribute( 'data-attributes' ) ).prolog ).toBe( '' );
+
+			act( () => {
+				vi.advanceTimersByTime( 300 );
+			} );
+
+			preview = screen.getByTestId( 'server-side-render' );
+			expect( JSON.parse( preview.getAttribute( 'data-attributes' ) ).prolog ).toBe( 'Updated' );
 		} );
 	} );
 } );

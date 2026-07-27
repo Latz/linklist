@@ -1,6 +1,8 @@
 import { __ } from '@wordpress/i18n';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { useDebounce } from '@wordpress/compose';
+import { useEffect, useState } from '@wordpress/element';
 import ServerSideRender from '@wordpress/server-side-render';
 
 const STYLE_OPTIONS = [
@@ -27,6 +29,18 @@ const SORT_OPTIONS = [
 export default function Edit( { attributes, setAttributes } ) {
 	const { style, prolog, sep, sort, minlinks } = attributes;
 	const blockProps = useBlockProps();
+
+	// ServerSideRender re-fetches from the REST API on every attribute
+	// change, so typing into prolog/separator/minlinks would otherwise
+	// trigger a server round-trip per keystroke. Debounce the attributes
+	// it renders from, independently of setAttributes, so the input
+	// fields themselves stay immediately responsive.
+	const [ previewAttributes, setPreviewAttributes ] = useState( attributes );
+	const debouncedSetPreviewAttributes = useDebounce( setPreviewAttributes, 300 );
+
+	useEffect( () => {
+		debouncedSetPreviewAttributes( attributes );
+	}, [ attributes, debouncedSetPreviewAttributes ] );
 
 	return (
 		<div { ...blockProps }>
@@ -70,7 +84,7 @@ export default function Edit( { attributes, setAttributes } ) {
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<ServerSideRender block="linklist/linklist" attributes={ attributes } />
+			<ServerSideRender block="linklist/linklist" attributes={ previewAttributes } />
 		</div>
 	);
 }
