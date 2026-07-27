@@ -31,6 +31,10 @@ left side of the edit screen.
 If you want to change the display of the link list for an already existing post/page you can use
 the Quick Edit or Bulk Edit option.
 
+On block themes, you can also add the "Link List" block directly wherever you want the list to
+appear, with per-block overrides for style, prolog text, separator, sort order, and minimum link
+count. When the block is present, the automatic append at the end of the content is skipped.
+
 == Settings ==
 LinkList provides a varietey of settings to tweak the list to your needs. The settings are
 divided into three parts (posts, pages and feeds).
@@ -189,6 +193,7 @@ You can programmatically change the content of the linklist by adding a filter:
       
 == Changelog ==
 = v0.7 =
++ Cached extracted-link parsing per post, invalidated on save, so link extraction no longer re-runs on every render of a post/page/feed item; also memoized the Gutenberg-block-presence check per request.
 + Rewrote link extraction to use WordPress's own HTML parser (WP_HTML_Processor) instead of a hand-rolled regex plus DOMDocument, fixing a PHP 8+ fatal in list sorting (usort() was calling a method as if static) along the way. Requires WordPress 6.4+ now.
 + Added a full automated test suite: Pest (PHP, with Brain Monkey) and Vitest (JS) covering link extraction, list rendering, display gating, the block editor UI, and the admin quick/bulk-edit script.
 + Added a Link List Gutenberg block for placing the list manually, with per-block overrides for style, prolog text, separator, sort order, and minimum link count. The automatic append is skipped whenever the block is already in a post, and the classic "Display Linklist" admin controls are hidden on block themes once a post already contains the block.
@@ -202,6 +207,8 @@ You can programmatically change the content of the linklist by adding a filter:
 * Fixed a dead admin hook registration left over from a typo, and a latent bug where an unrecognized list style left the wrapper markup undefined.
 * Renamed unprefixed global functions to avoid collisions with other plugins/themes, added missing direct file-access guards, completed missing translation text domains, and fixed missing output escaping in a few places -- WordPress.org plugin-directory submission requirements.
 * Synced the plugin header and this changelog's version/compatibility fields, which had drifted years out of date.
+* Removed jQuery from the admin bulk/quick-edit script in favor of vanilla JS and fetch(), and fixed the block editor's live preview feeling slow when switching list style or typing prolog/separator text.
+* Fixed several DeepSource static-analysis findings (JS lint rules, PHP constant visibility, analyzer configuration).
 - Removed yst_plugin_tools.php and its Yoast_Plugin_Admin base class — unrelated boilerplate from an old Yoast plugin template (an unused dashboard widget pulling a defunct Feedburner feed, a plugin-interop hook for a different third-party plugin, a donate box, and a broken enqueue for a CSS file that never existed). The admin settings page (LinkListAdmin) is now self-contained.
 
 = v0.5 =
