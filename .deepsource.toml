@@ -1,0 +1,28 @@
+version = 1
+
+exclude_patterns = [
+  "vendor/**",
+  "node_modules/**",
+  "build/**",
+  "bin/reports/**",
+  "*.min.js"
+]
+
+[[analyzers]]
+name = "php"
+enabled = true
+
+[[analyzers]]
+name = "javascript"
+enabled = true
+
+  [analyzers.meta]
+  environment = ["nodejs"]
+
+[[analyzers]]
+name = "secrets"
+enabled = true
+
+[[analyzers]]
+name = "test-coverage"
+enabled = true
