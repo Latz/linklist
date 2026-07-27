@@ -7,6 +7,7 @@ beforeEach(function () {
     $post = (object) ['ID' => 1, 'post_content' => ''];
     when('apply_filters')->returnArg(2);
     when('get_the_ID')->justReturn(1);
+    when('update_post_meta')->justReturn(true);
 });
 
 it('returns the content unchanged when per-post display is disabled', function () {

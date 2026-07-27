@@ -11,6 +11,11 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         Monkey\setUp();
+
+        // Default to "no current post" so LinkList's link-cache lookup
+        // (keyed by post ID) is skipped by default; tests exercising the
+        // cache explicitly stub get_the_ID()/get_post_meta()/etc.
+        Monkey\Functions\when( 'get_the_ID' )->justReturn( false );
     }
 
     protected function tearDown(): void

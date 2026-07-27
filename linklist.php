@@ -40,6 +40,7 @@ if ( !class_exists('LinkList') ) {
 		public $linklist;
 		public $prefix;
 		public $options;
+		public $post_id;
 
 		/* ------------------------------------------------------------------------ */
 		public function linkExtractor($content){
@@ -119,6 +120,7 @@ if ( !class_exists('LinkList') ) {
 		public function __construct($content) {
 			$this->content = $content;
             $this->options = get_option('linklist');
+            $this->post_id = get_the_ID();
 		} //linklist()
 		/* ------------------------------------------------------------------------ */
 		public function stopCreate() {
@@ -151,6 +153,27 @@ if ( !class_exists('LinkList') ) {
 
 		} //createLinkList()
 		/* ------------------------------------------------------------------------ */
+		// Extracted links depend only on post content, not on the style/prolog/
+		// sort overrides buildList() takes, so they're cached once per post in
+		// post meta -- linkExtractor()'s HTML tokenizer pass is the expensive
+		// part of buildList(), and would otherwise re-run on every render (once
+		// per archive-page post, plus once per Link List block instance on that
+		// post). Invalidated on save via linklist_invalidate_linklist_cache().
+		private function getCachedLinks() {
+			if (! $this->post_id) {
+				return $this->linkExtractor($this->content);
+			}
+
+			$cached = get_post_meta($this->post_id, '_linklist_cache', true);
+			if ('' !== $cached) {
+				return $cached;
+			}
+
+			$links = $this->linkExtractor($this->content);
+			update_post_meta($this->post_id, '_linklist_cache', $links);
+			return $links;
+		}
+		/* ------------------------------------------------------------------------ */
 		// build the linklist HTML for $this->content, without appending it.
 		// $overrides may supply 'style', 'prolog', 'sep', 'sort', 'minlinks' to
 		// take precedence over the stored $this->prefix-prefixed option for this
@@ -163,7 +186,7 @@ if ( !class_exists('LinkList') ) {
 					: $this->options[$this->prefix . $key];
 			};
 
-      		$this->linklist = $this->linkExtractor($this->content);
+      		$this->linklist = $this->getCachedLinks();
 			if (! $this->linklist) {
 			  return '';
 			}
@@ -321,11 +344,33 @@ if ( !class_exists('SingleLinkList') ) {
 	} //class SingleLinkList
 } //if
 /* =========================================================================== */
+/**
+ * Whether $post already contains the Link List block, memoized per post ID
+ * for the current request -- has_block() reparses the full block tree via
+ * parse_blocks() on every call, and this is checked from multiple call
+ * sites for the same post within a single request.
+ */
+function linklist_post_has_block( $post ) {
+	static $cache = array();
+
+	// Keyed by object identity, not $post->ID: guards against themes/plugins
+	// that run the_content more than once for the same $post instance
+	// (a well-known WP gotcha), without assuming every caller passes a
+	// real WP_Post with a populated ID.
+	$key = spl_object_id( $post );
+
+	if ( ! isset( $cache[ $key ] ) ) {
+		$cache[ $key ] = has_block( 'linklist/linklist', $post );
+	}
+
+	return $cache[ $key ];
+}
+/* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_create_linklist($content) {
  global $options, $post;
 
  // the Link List block already renders the list in place; don't also append it
- if ($post && has_block('linklist/linklist', $post)) {
+ if ($post && linklist_post_has_block($post)) {
    return $content;
  }
 
@@ -423,7 +468,7 @@ function linklist_should_show_editor_control( $post_type, $post = null ) {
 		return true;
 	}
 
-	return $post && ! has_block( 'linklist/linklist', $post );
+	return $post && ! linklist_post_has_block( $post );
 }
 /* --------------------------------------------------------------------------- */
 function linklist_add_meta_box( $post_type, $post = null ) {
@@ -445,6 +490,20 @@ function linklist_has_valid_save_nonce() {
 	}
 
 	return $quick_edit_nonce && wp_verify_nonce($quick_edit_nonce, basename(__FILE__));
+}
+/* ------------------------------------------------------------------------------------------------------------------ */
+/**
+ * Clears the cached extracted-links list for a post so the next render
+ * recomputes it. Runs unconditionally on save_post (not nested under
+ * is_admin()) so it also fires for block-editor saves, which go through
+ * the REST API rather than a classic admin request.
+ */
+function linklist_invalidate_linklist_cache( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+
+	delete_post_meta( $post_id, '_linklist_cache' );
 }
 /* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_save_meta_box($post_id) {
@@ -598,3 +657,7 @@ if (! $linklist_priority) {
 }
 
 add_filter('the_content', 'linklist_create_linklist', $linklist_priority);
+
+// registered unconditionally (not nested under is_admin()) so it also
+// fires for block-editor saves, which go through the REST API
+add_action( 'save_post', 'linklist_invalidate_linklist_cache', 10, 1 );
