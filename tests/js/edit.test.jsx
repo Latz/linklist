@@ -149,5 +149,31 @@ describe( 'Edit', () => {
 			preview = screen.getByTestId( 'server-side-render' );
 			expect( JSON.parse( preview.getAttribute( 'data-attributes' ) ).prolog ).toBe( 'Updated' );
 		} );
+
+		it( 'updates the preview immediately for a discrete style change, with no delay', () => {
+			vi.useFakeTimers();
+			const setAttributes = vi.fn();
+			const defaultAttributes = {
+				style: '',
+				prolog: '',
+				sep: '',
+				sort: '',
+				minlinks: -1,
+			};
+
+			const { rerender } = render(
+				<Edit attributes={ defaultAttributes } setAttributes={ setAttributes } />
+			);
+
+			rerender(
+				<Edit
+					attributes={ { ...defaultAttributes, style: 'rbul' } }
+					setAttributes={ setAttributes }
+				/>
+			);
+
+			const preview = screen.getByTestId( 'server-side-render' );
+			expect( JSON.parse( preview.getAttribute( 'data-attributes' ) ).style ).toBe( 'rbul' );
+		} );
 	} );
 } );

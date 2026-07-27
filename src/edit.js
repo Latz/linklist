@@ -2,8 +2,14 @@ import { __ } from '@wordpress/i18n';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useDebounce } from '@wordpress/compose';
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import ServerSideRender from '@wordpress/server-side-render';
+
+// Attribute keys that change via continuous typing (a keystroke storm worth
+// coalescing); style/sort come from SelectControls that fire one onChange
+// per click, so debouncing them just adds a pointless delay before the
+// preview reflects a discrete choice.
+const DEBOUNCED_PREVIEW_KEYS = [ 'prolog', 'sep', 'minlinks' ];
 
 const STYLE_OPTIONS = [
 	{ label: __( 'Use default', 'linklist' ), value: '' },
@@ -34,12 +40,30 @@ export default function Edit( { attributes, setAttributes } ) {
 	// change, so typing into prolog/separator/minlinks would otherwise
 	// trigger a server round-trip per keystroke. Debounce the attributes
 	// it renders from, independently of setAttributes, so the input
-	// fields themselves stay immediately responsive.
+	// fields themselves stay immediately responsive -- but only for keys
+	// that actually change via typing; a style/sort switch should update
+	// the preview right away, with nothing to coalesce.
 	const [ previewAttributes, setPreviewAttributes ] = useState( attributes );
 	const debouncedSetPreviewAttributes = useDebounce( setPreviewAttributes, 300 );
+	const previousAttributesRef = useRef( attributes );
 
 	useEffect( () => {
-		debouncedSetPreviewAttributes( attributes );
+		const previous = previousAttributesRef.current;
+		previousAttributesRef.current = attributes;
+
+		const changedKeys = Object.keys( attributes ).filter(
+			( key ) => attributes[ key ] !== previous[ key ]
+		);
+		const shouldDebounce =
+			changedKeys.length > 0 &&
+			changedKeys.every( ( key ) => DEBOUNCED_PREVIEW_KEYS.includes( key ) );
+
+		if ( shouldDebounce ) {
+			debouncedSetPreviewAttributes( attributes );
+		} else {
+			debouncedSetPreviewAttributes.cancel();
+			setPreviewAttributes( attributes );
+		}
 	}, [ attributes, debouncedSetPreviewAttributes ] );
 
 	return (
