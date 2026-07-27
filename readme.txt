@@ -191,11 +191,18 @@ You can programmatically change the content of the linklist by adding a filter:
 = v0.7 =
 + Rewrote link extraction to use WordPress's own HTML parser (WP_HTML_Processor) instead of a hand-rolled regex plus DOMDocument, fixing a PHP 8+ fatal in list sorting (usort() was calling a method as if static) along the way. Requires WordPress 6.4+ now.
 + Added a full automated test suite: Pest (PHP, with Brain Monkey) and Vitest (JS) covering link extraction, list rendering, display gating, the block editor UI, and the admin quick/bulk-edit script.
++ Added a Link List Gutenberg block for placing the list manually, with per-block overrides for style, prolog text, separator, sort order, and minimum link count. The automatic append is skipped whenever the block is already in a post, and the classic "Display Linklist" admin controls are hidden on block themes once a post already contains the block.
++ Fixed a CSRF gap: the bulk-edit AJAX handler had no nonce verification at all. Added nonce generation/verification and proper sanitization of the submitted post IDs and state.
 * Replaced legacy sanitization/escaping with WordPress core functions throughout: wp_unslash()/sanitize_text_field() instead of addslashes(), esc_attr() instead of htmlentities()/stripslashes(), esc_url() on rendered link hrefs, absint() for the priority setting, wp_die() instead of die(), and get_extended() for <!--more--> detection (now also handles <!--more Custom Text-->).
 * Fixed a PHP 8.2+ deprecation warning from an undeclared dynamic property (LinkList::$options).
 * Removed duplicated row-building code in the admin settings page (posts/pages/feed sections), and fixed the settings box rendering flush against the "Need support?" sidebar box.
 * Modernized linklist.js (const/let, template literals, strict equality) and documented its event handlers with JSDoc.
-- Removed yst_plugin_tools.php and its Yoast_Plugin_Admin base class — unrelated boilerplate from an old Yoast plugin template (an unused dashboard widget pulling a defunct Feedburner feed, a plugin-interop hook for a different third-party plugin, a donate box, and a broken enqueue for a CSS file that never existed). The admin settings page (LinkList_Admin) is now self-contained.
+* Fixed post_active being silently ignored for the Gutenberg block and the classic single-post view; the site-wide "Display linklist in posts" toggle now applies there too (post_more/post_display intentionally remain limited to the main blog page, per their documented behavior).
+* Fixed the quick-edit and bulk-edit dropdowns sharing the same invalid duplicate HTML id.
+* Fixed a dead admin hook registration left over from a typo, and a latent bug where an unrecognized list style left the wrapper markup undefined.
+* Renamed unprefixed global functions to avoid collisions with other plugins/themes, added missing direct file-access guards, completed missing translation text domains, and fixed missing output escaping in a few places -- WordPress.org plugin-directory submission requirements.
+* Synced the plugin header and this changelog's version/compatibility fields, which had drifted years out of date.
+- Removed yst_plugin_tools.php and its Yoast_Plugin_Admin base class — unrelated boilerplate from an old Yoast plugin template (an unused dashboard widget pulling a defunct Feedburner feed, a plugin-interop hook for a different third-party plugin, a donate box, and a broken enqueue for a CSS file that never existed). The admin settings page (LinkListAdmin) is now self-contained.
 
 = v0.5 =
 + Added display option for individual posts (inl. Quick and Bulk edit)
