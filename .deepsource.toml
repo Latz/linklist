@@ -18,6 +18,8 @@ enabled = true
 
   [analyzers.meta]
   environment = ["nodejs"]
+  plugins = ["react"]
+  globals = ["ajaxurl", "inlineEditPost", "linklistBulkEdit"]
 
 [[analyzers]]
 name = "secrets"

@@ -7,9 +7,9 @@ if ( ! class_exists( 'LinkListAdmin' ) ) {
 
 	class LinkListAdmin {
 
-		const PROLOG_LABEL   = 'Content to put in front of list';
-		const MINLINKS_LABEL = 'Minimum links';
-		const MINLINKS_DESC  = 'Minimum number of links to display LinkList';
+		public const PROLOG_LABEL   = 'Content to put in front of list';
+		public const MINLINKS_LABEL = 'Minimum links';
+		public const MINLINKS_DESC  = 'Minimum number of links to display LinkList';
 
 		public $hook 		= 'linklist';
 		public $longname	= 'LinkList Configuration';

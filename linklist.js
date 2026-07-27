@@ -2,12 +2,12 @@
  * Submits the bulk-edit LinkList state for the selected posts via AJAX.
  * @listens click#bulk_edit
  */
-document.getElementById( 'bulk_edit' )?.addEventListener( 'click', function () {
+document.getElementById( 'bulk_edit' )?.addEventListener( 'click', () => {
 	const bulk_row = document.getElementById( 'bulk-edit' );
 	const post_ids = [];
 
 	// get the IDs of the selected posts
-	bulk_row.querySelectorAll( '#bulk-titles > *' ).forEach( function ( child ) {
+	bulk_row.querySelectorAll( '#bulk-titles > *' ).forEach( ( child ) => {
 		post_ids.push( child.id.replace( /^(ttle)/i, '' ) );
 	} );
 
@@ -36,8 +36,8 @@ const $wp_inline_edit = inlineEditPost.edit;
  * with the edited post's current LinkList state.
  * @listens inlineEditPost#edit
  */
-inlineEditPost.edit = function ( id ) {
-	$wp_inline_edit.apply( this, arguments );
+inlineEditPost.edit = function ( id, ...rest ) {
+	$wp_inline_edit.apply( this, [ id, ...rest ] );
 
 	const post_id = typeof id === 'object' ? Number.parseInt( this.getId( id ), 10 ) : 0;
 	const linklist_display = `#linklist-${ post_id }`;

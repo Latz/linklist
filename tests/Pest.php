@@ -75,7 +75,9 @@ if ( ! defined( 'ABSPATH' ) ) {
         function __( $text, $domain = 'default' ) { return $text; }
     }
     if ( ! function_exists( '_doing_it_wrong' ) ) {
-        function _doing_it_wrong( $function_name, $message, $version ) {}
+        function _doing_it_wrong( $function_name, $message, $version ) {
+            // Intentional no-op stub for the real WP core function.
+        }
     }
     if ( ! function_exists( 'esc_url' ) ) {
         function esc_url( $url ) { return $url; }
