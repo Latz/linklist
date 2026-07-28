@@ -133,6 +133,36 @@ describe('PageLinkList::stopCreate', function () {
 
         expect($list->stopCreate())->toBe(0);
     });
+
+    it('a lastpage override of "on" takes precedence over a disabled page_last option', function () {
+        global $numpages, $page;
+        $numpages = 3;
+        $page = 1;
+        stubLinklistOptions(['page_active' => 'on', 'page_last' => '']);
+        $list = new PageLinkList('content');
+
+        expect($list->stopCreate(['lastpage' => 'on']))->toBe(1);
+    });
+
+    it('an explicit false lastpage override takes precedence over an enabled page_last option', function () {
+        global $numpages, $page;
+        $numpages = 3;
+        $page = 1;
+        stubLinklistOptions(['page_active' => 'on', 'page_last' => 'on']);
+        $list = new PageLinkList('content');
+
+        expect($list->stopCreate(['lastpage' => false]))->toBe(0);
+    });
+
+    it('falls back to the stored page_last option when the override is empty', function () {
+        global $numpages, $page;
+        $numpages = 3;
+        $page = 1;
+        stubLinklistOptions(['page_active' => 'on', 'page_last' => 'on']);
+        $list = new PageLinkList('content');
+
+        expect($list->stopCreate(['lastpage' => '']))->toBe(1);
+    });
 });
 
 describe('FeedLinkList::stopCreate', function () {

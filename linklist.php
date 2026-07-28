@@ -131,6 +131,15 @@ if ( !class_exists('LinkList') ) {
 			return strnatcasecmp( $a[1], $b[1] );
 		}
 		/* ------------------------------------------------------------------------ */
+		// Shared override-resolution: an override wins over $default unless it's
+		// unset or the empty string, in which case $default (a stored option) is
+		// used instead. Shared by buildList() and PageLinkList::stopCreate().
+		protected function resolveOverride($overrides, $key, $default) {
+			return (isset($overrides[$key]) && $overrides[$key] !== '')
+				? $overrides[$key]
+				: $default;
+		}
+		/* ------------------------------------------------------------------------ */
     	public function createLinkList() {
 
 		    // if the user has deslected to display the list only return the content
@@ -181,9 +190,7 @@ if ( !class_exists('LinkList') ) {
 		public function buildList($overrides = array()) {
 
 			$opt = function($key) use ($overrides) {
-				return (isset($overrides[$key]) && $overrides[$key] !== '')
-					? $overrides[$key]
-					: $this->options[$this->prefix . $key];
+				return $this->resolveOverride($overrides, $key, $this->options[$this->prefix . $key]);
 			};
 
       		$this->linklist = $this->getCachedLinks();
@@ -253,14 +260,19 @@ if ( !class_exists('PageLinkList') ) {
 			$this->prefix = 'page_';
 		}
 		/* ------------------------------------------------------------------------ */
-		public function stopCreate() {
+		// $overrides may supply 'lastpage' ('on'/'off') to take precedence over the
+		// stored 'page_last' option, e.g. for a per-block override; omit/empty the
+		// key to fall back to the stored option.
+		public function stopCreate($overrides = array()) {
 			global $numpages, $page;
 
 		if (! $this->options['page_active']) {
 			return 1;
 		}
 
-		  if ($numpages > 1 && $this->options['page_last'] && ($numpages != $page)) { //splitted page or post, display only on last page
+		  $page_last = $this->resolveOverride($overrides, 'lastpage', $this->options['page_last']);
+
+		  if ($numpages > 1 && $page_last && ($numpages != $page)) { //splitted page or post, display only on last page
 				return 1;
 		  }
 

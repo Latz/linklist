@@ -31,7 +31,7 @@ add_action( 'init', 'linklist_register_block' );
  * linklist HTML for the current post's content, applying any per-block
  * attribute overrides on top of the site-wide linklist settings.
  *
- * @param array $attributes Block attributes (style, prolog, sep, sort, minlinks).
+ * @param array $attributes Block attributes (style, prolog, sep, sort, minlinks, lastpage).
  * @return string Linklist HTML, or '' if nothing should be rendered.
  */
 function linklist_render_block( $attributes ) {
@@ -41,13 +41,26 @@ function linklist_render_block( $attributes ) {
 		return '';
 	}
 
-	if ( $post->post_type === 'page' ) {
+	$is_page = $post->post_type === 'page';
+
+	if ( $is_page ) {
 		$linklist = new PageLinkList( $post->post_content );
 	} else {
 		$linklist = new SingleLinkList( $post->post_content );
 	}
 
-	if ( $linklist->stopCreate() ) {
+	// "Last page only" (page_last) only exists on PageLinkList; it has no
+	// effect on posts, so the override is only ever built for pages. Mapped
+	// to 'on'/false the same way the 'sort' override is below, so both
+	// reach their consuming method as an already-normalized truthy value.
+	$stop_overrides = array();
+	if ( $is_page && isset( $attributes['lastpage'] ) && $attributes['lastpage'] === 'on' ) {
+		$stop_overrides['lastpage'] = 'on';
+	} elseif ( $is_page && isset( $attributes['lastpage'] ) && $attributes['lastpage'] === 'off' ) {
+		$stop_overrides['lastpage'] = false;
+	}
+
+	if ( $linklist->stopCreate( $stop_overrides ) ) {
 		return '';
 	}
 

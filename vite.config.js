@@ -15,6 +15,7 @@ export default defineConfig( {
 			'@wordpress/blocks': mocksDir( 'wordpress-blocks.js' ),
 			'@wordpress/block-editor': mocksDir( 'wordpress-block-editor.jsx' ),
 			'@wordpress/components': mocksDir( 'wordpress-components.jsx' ),
+			'@wordpress/data': mocksDir( 'wordpress-data.js' ),
 			'@wordpress/server-side-render': mocksDir( 'wordpress-server-side-render.jsx' ),
 		},
 	},

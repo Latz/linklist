@@ -4,7 +4,7 @@ Tags: links
 Requires at least: 6.4
 Tested up to: 7.0
 Stable tag: 0.7
-Author: Lutz Schroeer
+Author: Latz
 Version: 0.7
 Author URI: http://elektroelch.de/blog/
 License: GPLv2 or later
@@ -19,25 +19,39 @@ LinkList adds a list of mentioned links at the end of the post, page or feed.
 == Installation ==
 
 1. Download the plugin and unzip it.
-2. Upload the folder lonklist/ to your /wp-content/plugins/ folder.
+2. Upload the folder linklist/ to your /wp-content/plugins/ folder.
 3. Activate the plugin from your WordPress admin panel.
 4. Installation finished.
 
 == Usage ==
-Linklist automatically puts a list of all link at the end of the post or page. If you want to exclude an
-individual page/post from displaying the list you can de-select the "Display Linklist" checkbox on the
-left side of the edit screen.
+
+= Traditional (classic) themes =
+Linklist automatically puts a list of all links at the end of the post or page. If you want to
+exclude an individual page/post from displaying the list you can de-select the "Display Linklist"
+checkbox on the left side of the edit screen.
 
 If you want to change the display of the link list for an already existing post/page you can use
 the Quick Edit or Bulk Edit option.
 
-On block themes, you can also add the "Link List" block directly wherever you want the list to
-appear, with per-block overrides for style, prolog text, separator, sort order, and minimum link
-count. When the block is present, the automatic append at the end of the content is skipped.
+All display behavior for classic themes is controlled centrally under Settings > LinkList, see
+"Settings" below.
+
+= Block themes =
+On block themes, add the "Link List" block directly wherever you want the list to appear. Each
+block instance has its own overrides for style, prolog text, separator, sort order, and minimum
+link count (plus "last page only" on pages), set in the block editor sidebar -- see "Block
+settings" below.
+
+When the block is present in a post/page, the automatic append at the end of the content is
+skipped, and the classic "Display Linklist" admin controls are hidden for that post/page.
 
 == Settings ==
-LinkList provides a varietey of settings to tweak the list to your needs. The settings are
-divided into three parts (posts, pages and feeds).
+LinkList's settings are split into two places: the central Settings > LinkList screen, which
+controls the automatic append used by classic themes, and the per-block settings of the "Link
+List" block, used on block themes.
+
+= Classic settings (Settings > LinkList) =
+These settings are divided into three parts (posts, pages and feeds).
 
 = General settings =
 Here you can define if the linklist should be display on posts, pages and/or feeds at all.
@@ -165,6 +179,45 @@ Minimum number of links mentioned in the post for the list to be displayed.
 * Sorting
 Sort the links alphabetically. This function has an issue with international characters (e.g.
 German umlauts).
+
+= Block settings =
+The "Link List" block has its own settings, available in the block editor sidebar when the
+block is selected. These apply only to that one block instance -- they don't change the
+classic settings above or affect any other block or page.
+
+* Content to put in front of list
+Text to be displayed in front of the linklist
+
+* Style of list
+Same three options as the classic settings: ordered list, unordered list, or char separated
+list.
+
+* Separator character(s)
+Character(s) used to separate the links if "char separated list" is chosen above.
+
+* Minimum links
+Minimum number of links mentioned in the post for the list to be displayed.
+
+* Sorting
+Sort the links alphabetically. This function has an issue with international characters (e.g.
+German umlauts).
+
+* Last page only (pages only)
+If you have devided the page into several parts using <!--nextpage--> the link list is only
+displayed on the last page. Only shown in the sidebar when editing a page, since it has no
+effect on posts.
+
+= Which classic settings still apply to the block? =
+The block only overrides the five settings listed above. A few of the remaining classic
+Posts/Pages settings still take effect even when you use the block, since the block reuses the
+same underlying logic; others are intentionally skipped:
+
+* Exceptions still apply -- link harvesting uses the same logic regardless of whether the list
+is auto-appended or placed via the block.
+* More tag and Single post do NOT apply to the block (or to the single-post/page view in
+general) -- they only gate the archive/main-blog-page listing.
+* Priority does NOT apply to the block -- it only controls the position of the automatic
+content-filter append, which the block bypasses entirely by rendering itself directly.
 
 = Styling LinkList =
 You can style the link list with CSS:

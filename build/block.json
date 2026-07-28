@@ -27,6 +27,10 @@
     "minlinks": {
       "type": "number",
       "default": -1
+    },
+    "lastpage": {
+      "type": "string",
+      "default": ""
     }
   },
   "supports": {

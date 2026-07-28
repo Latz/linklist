@@ -1,0 +1,6 @@
+{
+	"sonarlint.connectedMode.project": {
+		"connectionId": "latz-1",
+		"projectKey": "Latz_linklist"
+	}
+}

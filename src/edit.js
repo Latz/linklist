@@ -2,6 +2,7 @@ import { __ } from '@wordpress/i18n';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import { useDebounce } from '@wordpress/compose';
+import { useSelect } from '@wordpress/data';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import ServerSideRender from '@wordpress/server-side-render';
 
@@ -24,6 +25,14 @@ const SORT_OPTIONS = [
 	{ label: __( 'Keep original order', 'linklist' ), value: 'off' },
 ];
 
+// "Last page only" only has an effect on pages split with <!--nextpage-->
+// (PageLinkList); it's a no-op for posts, so the control is hidden there.
+const LASTPAGE_OPTIONS = [
+	{ label: __( 'Use default', 'linklist' ), value: '' },
+	{ label: __( 'Show only on the last page', 'linklist' ), value: 'on' },
+	{ label: __( 'Show on every page', 'linklist' ), value: 'off' },
+];
+
 /**
  * Editor UI for the Link List block: per-block overrides in the sidebar,
  * plus a live server-rendered preview reusing the existing PHP renderer.
@@ -33,8 +42,12 @@ const SORT_OPTIONS = [
  * @param {Function} props.setAttributes
  */
 export default function Edit( { attributes, setAttributes } ) {
-	const { style, prolog, sep, sort, minlinks } = attributes;
+	const { style, prolog, sep, sort, minlinks, lastpage } = attributes;
 	const blockProps = useBlockProps();
+	const postType = useSelect(
+		( select ) => select( 'core/editor' ).getCurrentPostType(),
+		[]
+	);
 
 	// ServerSideRender re-fetches from the REST API on every attribute
 	// change, so typing into prolog/separator/minlinks would otherwise
@@ -106,6 +119,14 @@ export default function Edit( { attributes, setAttributes } ) {
 							setAttributes( { minlinks: value === '' ? -1 : Number( value ) } )
 						}
 					/>
+					{ postType === 'page' && (
+						<SelectControl
+							label={ __( 'Last page only', 'linklist' ) }
+							value={ lastpage }
+							options={ LASTPAGE_OPTIONS }
+							onChange={ ( value ) => setAttributes( { lastpage: value } ) }
+						/>
+					) }
 				</PanelBody>
 			</InspectorControls>
 			<ServerSideRender block="linklist/linklist" attributes={ previewAttributes } />

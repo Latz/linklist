@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { __setMockPostType } from './mocks/wordpress-data.js';
 import Edit from '../../src/edit.js';
 
 function renderEdit( attributes = {} ) {
@@ -11,6 +12,7 @@ function renderEdit( attributes = {} ) {
 		sep: '',
 		sort: '',
 		minlinks: -1,
+		lastpage: '',
 		...attributes,
 	};
 
@@ -22,6 +24,11 @@ function renderEdit( attributes = {} ) {
 }
 
 describe( 'Edit', () => {
+	afterEach( () => {
+		__setMockPostType( 'post' );
+	} );
+
+
 	it( 'renders the list style, sort order, prolog and minlinks controls', () => {
 		renderEdit();
 
@@ -99,6 +106,30 @@ describe( 'Edit', () => {
 		await user.type( screen.getByLabelText( 'Minimum number of links to show' ), '5' );
 
 		expect( setAttributes ).toHaveBeenCalledWith( { minlinks: 5 } );
+	} );
+
+	it( 'does not render the "Last page only" control on a post', () => {
+		__setMockPostType( 'post' );
+		renderEdit();
+
+		expect( screen.queryByLabelText( 'Last page only' ) ).not.toBeInTheDocument();
+	} );
+
+	it( 'renders the "Last page only" control on a page', () => {
+		__setMockPostType( 'page' );
+		renderEdit();
+
+		expect( screen.getByLabelText( 'Last page only' ) ).toBeInTheDocument();
+	} );
+
+	it( 'calls setAttributes with the chosen lastpage value', async () => {
+		__setMockPostType( 'page' );
+		const user = userEvent.setup();
+		const { setAttributes } = renderEdit();
+
+		await user.selectOptions( screen.getByLabelText( 'Last page only' ), 'on' );
+
+		expect( setAttributes ).toHaveBeenCalledWith( { lastpage: 'on' } );
 	} );
 
 	it( 'passes the block name and attributes through to the server-side preview', () => {

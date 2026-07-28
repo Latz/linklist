@@ -138,6 +138,32 @@ it('maps a non-negative minlinks attribute to a buildList override', function ()
     expect(linklist_render_block(['minlinks' => 5]))->toBe('');
 });
 
+it('maps the lastpage attribute to a stopCreate override on a page', function () {
+    global $post, $numpages, $page;
+    $numpages = 3;
+    $page = 1;
+    $post = (object) [
+        'ID' => 1,
+        'post_type' => 'page',
+        'post_content' => '<a href="https://a.test">A</a>',
+    ];
+    stubLinklistOptions(['page_active' => 'on', 'page_last' => '', 'page_minlinks' => 0]);
+
+    expect(linklist_render_block(['lastpage' => 'on']))->toBe('');
+});
+
+it('ignores the lastpage attribute for a post, since page_last has no meaning there', function () {
+    global $post;
+    $post = (object) [
+        'ID' => 1,
+        'post_type' => 'post',
+        'post_content' => '<a href="https://a.test">A</a>',
+    ];
+    stubLinklistOptions(['post_active' => 'on', 'post_more' => '', 'post_display' => '', 'post_minlinks' => 0]);
+
+    expect(linklist_render_block(['lastpage' => 'on']))->toContain('https://a.test');
+});
+
 it('ignores the block default minlinks sentinel of -1', function () {
     global $post;
     $post = (object) [
