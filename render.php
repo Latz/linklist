@@ -27,6 +27,32 @@ function linklist_register_block() {
 add_action( 'init', 'linklist_register_block' );
 
 /**
+ * Maps an 'on'/'off' block attribute (as used by the sort/lastpage
+ * SelectControls) to the truthy/false override value LinkList::buildList()
+ * and stopCreate() expect, or null if the attribute is unset/anything else
+ * (meaning "fall back to the stored option").
+ *
+ * @param array  $attributes Block attributes.
+ * @param string $key Attribute key to read.
+ * @return string|false|null 'on', false, or null.
+ */
+function linklist_map_onoff_attribute( $attributes, $key ) {
+	if ( ! isset( $attributes[ $key ] ) ) {
+		return null;
+	}
+
+	if ( $attributes[ $key ] === 'on' ) {
+		return 'on';
+	}
+
+	if ( $attributes[ $key ] === 'off' ) {
+		return false;
+	}
+
+	return null;
+}
+
+/**
  * Server-side render callback for the linklist/linklist block. Builds the
  * linklist HTML for the current post's content, applying any per-block
  * attribute overrides on top of the site-wide linklist settings.
@@ -42,51 +68,53 @@ function linklist_render_block( $attributes ) {
 	}
 
 	$is_page = $post->post_type === 'page';
-
-	if ( $is_page ) {
-		$linklist = new PageLinkList( $post->post_content );
-	} else {
-		$linklist = new SingleLinkList( $post->post_content );
-	}
+	$linklist = $is_page
+		? new PageLinkList( $post->post_content )
+		: new SingleLinkList( $post->post_content );
 
 	// "Last page only" (page_last) only exists on PageLinkList; it has no
-	// effect on posts, so the override is only ever built for pages. Mapped
-	// to 'on'/false the same way the 'sort' override is below, so both
-	// reach their consuming method as an already-normalized truthy value.
+	// effect on posts, so the override is only ever built for pages.
 	$stop_overrides = array();
-	if ( $is_page && isset( $attributes['lastpage'] ) && $attributes['lastpage'] === 'on' ) {
-		$stop_overrides['lastpage'] = 'on';
-	} elseif ( $is_page && isset( $attributes['lastpage'] ) && $attributes['lastpage'] === 'off' ) {
-		$stop_overrides['lastpage'] = false;
+	if ( $is_page ) {
+		$lastpage = linklist_map_onoff_attribute( $attributes, 'lastpage' );
+		if ( null !== $lastpage ) {
+			$stop_overrides['lastpage'] = $lastpage;
+		}
 	}
 
 	if ( $linklist->stopCreate( $stop_overrides ) ) {
 		return '';
 	}
 
+	return $linklist->buildList( linklist_build_overrides( $attributes ) );
+}
+
+/**
+ * Builds the buildList() override array from block attributes: style/prolog/
+ * sep pass through when non-empty, sort maps through
+ * linklist_map_onoff_attribute(), and minlinks passes through when it's not
+ * the block default's unset sentinel.
+ *
+ * @param array $attributes Block attributes.
+ * @return array Overrides for LinkList::buildList().
+ */
+function linklist_build_overrides( $attributes ) {
 	$overrides = array();
 
-	if ( ! empty( $attributes['style'] ) ) {
-		$overrides['style'] = $attributes['style'];
+	foreach ( array( 'style', 'prolog', 'sep' ) as $key ) {
+		if ( ! empty( $attributes[ $key ] ) ) {
+			$overrides[ $key ] = $attributes[ $key ];
+		}
 	}
 
-	if ( ! empty( $attributes['prolog'] ) ) {
-		$overrides['prolog'] = $attributes['prolog'];
-	}
-
-	if ( ! empty( $attributes['sep'] ) ) {
-		$overrides['sep'] = $attributes['sep'];
-	}
-
-	if ( isset( $attributes['sort'] ) && $attributes['sort'] === 'on' ) {
-		$overrides['sort'] = 'on';
-	} elseif ( isset( $attributes['sort'] ) && $attributes['sort'] === 'off' ) {
-		$overrides['sort'] = false;
+	$sort = linklist_map_onoff_attribute( $attributes, 'sort' );
+	if ( null !== $sort ) {
+		$overrides['sort'] = $sort;
 	}
 
 	if ( isset( $attributes['minlinks'] ) && (int) $attributes['minlinks'] >= 0 ) {
 		$overrides['minlinks'] = (int) $attributes['minlinks'];
 	}
 
-	return $linklist->buildList( $overrides );
+	return $overrides;
 }

@@ -10,7 +10,7 @@ import ServerSideRender from '@wordpress/server-side-render';
 // coalescing); style/sort come from SelectControls that fire one onChange
 // per click, so debouncing them just adds a pointless delay before the
 // preview reflects a discrete choice.
-const DEBOUNCED_PREVIEW_KEYS = [ 'prolog', 'sep', 'minlinks' ];
+const DEBOUNCED_PREVIEW_KEYS = new Set( [ 'prolog', 'sep', 'minlinks' ] );
 
 const STYLE_OPTIONS = [
 	{ label: __( 'Use default', 'linklist' ), value: '' },
@@ -69,7 +69,7 @@ export default function Edit( { attributes, setAttributes } ) {
 		);
 		const shouldDebounce =
 			changedKeys.length > 0 &&
-			changedKeys.every( ( key ) => DEBOUNCED_PREVIEW_KEYS.includes( key ) );
+			changedKeys.every( ( key ) => DEBOUNCED_PREVIEW_KEYS.has( key ) );
 
 		if ( shouldDebounce ) {
 			debouncedSetPreviewAttributes( attributes );

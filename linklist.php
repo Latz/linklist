@@ -51,35 +51,42 @@ if ( !class_exists('LinkList') ) {
 			$excludedDivs = array(); // stack of bools: is each open DIV ancestor excluded?
 
 			while ($processor->next_token()) {
-				if ('#tag' !== $processor->get_token_type()) {
-					continue;
-				}
-
-				$tag = $processor->get_tag();
-
-				if ('DIV' === $tag) {
-					$this->trackDivExclusion($processor, $excludedDivs);
-					continue;
-				}
-
-				if ('A' !== $tag || $processor->is_tag_closer() || in_array(true, $excludedDivs, true)) {
-					continue;
-				}
-
-				$href = $processor->get_attribute('href');
-				if (! is_string($href)) {
-					continue;
-				}
-
-				$inner = $this->collectAnchorInnerHtml($processor);
-
-				if ($this->isHarvestableLink($inner, $href, $linkArray, $post->ID)) {
-					array_push($linkArray, array($href, $inner));
-				}
+				$this->processLinkExtractorToken($processor, $excludedDivs, $linkArray, $post->ID);
 			} //while
 
 		 return $linkArray;
 		} //linkExtractor()
+		/* ------------------------------------------------------------------------ */
+		// Handles one token from linkExtractor()'s while loop: tracks DIV-exclusion
+		// state, skips anything that isn't an opening <a> outside an excluded DIV,
+		// and harvests the link into $linkArray if it passes isHarvestableLink().
+		private function processLinkExtractorToken($processor, array &$excludedDivs, array &$linkArray, $post_id) {
+			if ('#tag' !== $processor->get_token_type()) {
+				return;
+			}
+
+			$tag = $processor->get_tag();
+
+			if ('DIV' === $tag) {
+				$this->trackDivExclusion($processor, $excludedDivs);
+				return;
+			}
+
+			if ('A' !== $tag || $processor->is_tag_closer() || in_array(true, $excludedDivs, true)) {
+				return;
+			}
+
+			$href = $processor->get_attribute('href');
+			if (! is_string($href)) {
+				return;
+			}
+
+			$inner = $this->collectAnchorInnerHtml($processor);
+
+			if ($this->isHarvestableLink($inner, $href, $linkArray, $post_id)) {
+				array_push($linkArray, array($href, $inner));
+			}
+		}
 		/* ------------------------------------------------------------------------ */
 		// Push/pop the DIV-exclusion stack for one DIV open/close token, tracking
 		// whether the current DIV ancestor chain matches an excepted class.
@@ -532,7 +539,12 @@ function linklist_save_meta_box($post_id) {
 		return $post_id;
 	}
 
-	// save quick edit data
+	linklist_save_display_meta($post_id);
+}
+/* ------------------------------------------------------------------------------------------------------------------ */
+// Saves the 'linklist-display' meta from either the quick-edit select box
+// or the classic edit-post meta box checkbox, whichever form submitted.
+function linklist_save_display_meta($post_id) {
 	if (isset($_POST["linklist-quick-edit-nonce"])) // save quick edit
 	{
 		$selectbox_value = isset($_POST['linklist-selectbox']) ? sanitize_text_field(wp_unslash($_POST['linklist-selectbox'])) : '';

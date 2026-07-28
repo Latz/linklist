@@ -168,6 +168,31 @@ if ( ! class_exists( 'LinkListAdmin' ) ) {
 			);
 		}
 
+	// Validates and saves a submitted settings form: checks capability/nonce,
+	// sanitizes each known option key from $_POST, converts the exceptions
+	// list to an array, and persists both the 'linklist' and
+	// 'linklist_priority' options.
+	private function handle_settings_submit(array $options) {
+		if (!current_user_can('manage_options')) {
+			wp_die(esc_html__('You cannot edit the LinkList options.', 'linklist'));
+		}
+		check_admin_referer('linklist-config');
+
+		foreach($options as $option) {
+			$ll_options[$option] = (isset  ($_POST [$option])) ? sanitize_text_field( wp_unslash( $_POST [$option] ) ) : '';
+		}
+
+		// convert string list to array for easier access in main plugin
+		if (isset($ll_options['exceptions'])) {
+			$ll_options['exceptions'] = array_map( 'trim', explode( ',', $ll_options['exceptions'] ) );
+		}
+		update_option('linklist', $ll_options);
+
+		if (isset($_POST['priority'])) {
+			update_option('linklist_priority', absint($_POST['priority']));
+		}
+	}
+
 	public function config_page() {
 
 		$options = array('post_active',	  'page_active',   'feed_active',
@@ -184,26 +209,7 @@ if ( ! class_exists( 'LinkListAdmin' ) ) {
 						);
 
 		if ( isset($_POST['submit']) ) {
-			if (!current_user_can('manage_options')) {
-				wp_die(esc_html__('You cannot edit the LinkList options.', 'linklist'));
-			}
-			check_admin_referer('linklist-config');
-
-
-		   foreach($options as $option) {
-			$ll_options[$option] = (isset  ($_POST [$option])) ? sanitize_text_field( wp_unslash( $_POST [$option] ) ) : '';
-		   }
-
-            // convert string list to array for easier access in main plugin
-            if (isset($ll_options['exceptions'])) {
-                $ll_options['exceptions'] = array_map( 'trim', explode( ',', $ll_options['exceptions'] ) );
-            }
-			update_option('linklist', $ll_options);
-
-            if (isset($_POST['priority'])) {
-                update_option('linklist_priority', absint($_POST['priority']));
-            }
-
+			$this->handle_settings_submit($options);
 		}
 		$options  = get_option('linklist');
         $option_priority = get_option('linklist_priority');
