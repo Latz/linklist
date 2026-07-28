@@ -217,28 +217,9 @@ if ( !class_exists('LinkList') ) {
 			$list = '<div class="linklist"><span class=linklistheader">' .
 			$opt('prolog') . '</span>';
 
-			$del_start = "<li>";
-			$del_end = "</li>";
+			list($start, $end, $del_start, $del_end) = $this->getStyleDelimiters($opt('style'), $opt('sep'));
 
-			switch ($opt('style')) {
-				case 'rbul': $start = "<ul>";
-										 $end   = "</ul>";
-										 break;
-				case 'rbli': $start = "";
-										 $end   = "";
-										 $del_start = "";
-	  								 $del_end = $opt('sep');
-										 break;
-		        case 'rbol':
-		        default: $start = "<ol>";
-					 					 $end   = "</ol>";
-										 break;
-		  } //switch
-
-		  $list .= $start;
-		  foreach ($this->linklist as $link) {
-		    $list .= $del_start . '<a href="' . esc_url($link[0]) . '">' . $link[1].'</a>'.$del_end;
-		  }
+		  $list .= $start . $this->renderLinkItems($this->linklist, $del_start, $del_end);
 
 		  // remove last separator
 		  if ($opt('style') == "rbli") {
@@ -251,6 +232,34 @@ if ( !class_exists('LinkList') ) {
 		  return $list;
 
 		} //buildList()
+		/* ------------------------------------------------------------------------ */
+		// Maps a list style ('rbul'/'rbli'/'rbol') to its wrapper/item markup:
+		// wrapper start/end tags and per-link start/end delimiters. 'rbli'
+		// (char separated) has no wrapper and uses $sep as the item delimiter.
+		private function getStyleDelimiters($style, $sep) {
+			$del_start = "<li>";
+			$del_end = "</li>";
+
+			switch ($style) {
+				case 'rbul':
+					return array("<ul>", "</ul>", $del_start, $del_end);
+				case 'rbli':
+					return array("", "", "", $sep);
+				case 'rbol':
+				default:
+					return array("<ol>", "</ol>", $del_start, $del_end);
+			}
+		}
+		/* ------------------------------------------------------------------------ */
+		// Renders the <a>-wrapped link items, each surrounded by the style's
+		// item delimiters, concatenated into a single HTML string.
+		private function renderLinkItems(array $linklist, $del_start, $del_end) {
+			$html = '';
+			foreach ($linklist as $link) {
+				$html .= $del_start . '<a href="' . esc_url($link[0]) . '">' . $link[1] . '</a>' . $del_end;
+			}
+			return $html;
+		}
 
 	} //class LinkList
 } //if
@@ -638,11 +647,29 @@ function linklist_enqueue_edit_scripts() {
 	) );
 }
 /* ------------------------------------------------------------------------------------------------------------------ */
+/**
+ * Reads and sanitizes the bulk-edit post IDs from $_POST['post_ids'].
+ *
+ * @return int[] Sanitized post IDs, or an empty array if unset.
+ */
+function linklist_get_bulk_edit_post_ids() {
+	return isset( $_POST[ 'post_ids' ] ) ? array_map( 'absint', (array) wp_unslash( $_POST[ 'post_ids' ] ) ) : array();
+}
+/* ------------------------------------------------------------------------------------------------------------------ */
+/**
+ * Reads and sanitizes the bulk-edit linklist state from $_POST['linklist_state'].
+ *
+ * @return string Sanitized state ('yes'/'no'/'nochange'), or '' if unset.
+ */
+function linklist_get_bulk_edit_state() {
+	return isset( $_POST[ 'linklist_state' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'linklist_state' ] ) ) : '';
+}
+/* ------------------------------------------------------------------------------------------------------------------ */
 function linklist_save_bulk_edit() {
 	check_ajax_referer( 'linklist_save_bulk_edit', 'nonce' );
 
-	$post_ids = isset( $_POST[ 'post_ids' ] ) ? array_map( 'absint', (array) wp_unslash( $_POST[ 'post_ids' ] ) ) : array();
-	$linklist_state = isset( $_POST[ 'linklist_state' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'linklist_state' ] ) ) : '';
+	$post_ids = linklist_get_bulk_edit_post_ids();
+	$linklist_state = linklist_get_bulk_edit_state();
 
 	if (empty ($post_ids)) {
 		return;

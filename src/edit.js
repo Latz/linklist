@@ -34,28 +34,18 @@ const LASTPAGE_OPTIONS = [
 ];
 
 /**
- * Editor UI for the Link List block: per-block overrides in the sidebar,
- * plus a live server-rendered preview reusing the existing PHP renderer.
+ * ServerSideRender re-fetches from the REST API on every attribute change,
+ * so typing into prolog/separator/minlinks would otherwise trigger a server
+ * round-trip per keystroke. Debounces the attributes it renders from,
+ * independently of setAttributes, so the input fields themselves stay
+ * immediately responsive -- but only for keys that actually change via
+ * typing; a style/sort switch updates the preview right away, with nothing
+ * to coalesce.
  *
- * @param {Object} props
- * @param {Object} props.attributes
- * @param {Function} props.setAttributes
+ * @param {Object} attributes Current block attributes.
+ * @return {Object} The (possibly debounced) attributes to render the preview from.
  */
-export default function Edit( { attributes, setAttributes } ) {
-	const { style, prolog, sep, sort, minlinks, lastpage } = attributes;
-	const blockProps = useBlockProps();
-	const postType = useSelect(
-		( select ) => select( 'core/editor' ).getCurrentPostType(),
-		[]
-	);
-
-	// ServerSideRender re-fetches from the REST API on every attribute
-	// change, so typing into prolog/separator/minlinks would otherwise
-	// trigger a server round-trip per keystroke. Debounce the attributes
-	// it renders from, independently of setAttributes, so the input
-	// fields themselves stay immediately responsive -- but only for keys
-	// that actually change via typing; a style/sort switch should update
-	// the preview right away, with nothing to coalesce.
+function usePreviewAttributes( attributes ) {
 	const [ previewAttributes, setPreviewAttributes ] = useState( attributes );
 	const debouncedSetPreviewAttributes = useDebounce( setPreviewAttributes, 300 );
 	const previousAttributesRef = useRef( attributes );
@@ -79,6 +69,75 @@ export default function Edit( { attributes, setAttributes } ) {
 		}
 	}, [ attributes, debouncedSetPreviewAttributes ] );
 
+	return previewAttributes;
+}
+
+/**
+ * Separator field for the 'char separated' (rbli) list style; hidden for
+ * every other style since it has no effect.
+ *
+ * @param {Object} props
+ * @param {string} props.style
+ * @param {string} props.sep
+ * @param {Function} props.setAttributes
+ */
+function SeparatorControl( { style, sep, setAttributes } ) {
+	if ( style !== 'rbli' ) {
+		return null;
+	}
+
+	return (
+		<TextControl
+			label={ __( 'Separator', 'linklist' ) }
+			value={ sep }
+			placeholder={ __( 'Use default', 'linklist' ) }
+			onChange={ ( value ) => setAttributes( { sep: value } ) }
+		/>
+	);
+}
+
+/**
+ * "Last page only" control; only meaningful on pages split with
+ * <!--nextpage-->, so it's hidden on posts.
+ *
+ * @param {Object} props
+ * @param {string} props.postType
+ * @param {string} props.lastpage
+ * @param {Function} props.setAttributes
+ */
+function LastPageControl( { postType, lastpage, setAttributes } ) {
+	if ( postType !== 'page' ) {
+		return null;
+	}
+
+	return (
+		<SelectControl
+			label={ __( 'Last page only', 'linklist' ) }
+			value={ lastpage }
+			options={ LASTPAGE_OPTIONS }
+			onChange={ ( value ) => setAttributes( { lastpage: value } ) }
+		/>
+	);
+}
+
+/**
+ * Editor UI for the Link List block: per-block overrides in the sidebar,
+ * plus a live server-rendered preview reusing the existing PHP renderer.
+ *
+ * @param {Object} props
+ * @param {Object} props.attributes
+ * @param {Function} props.setAttributes
+ */
+export default function Edit( { attributes, setAttributes } ) {
+	const { style, prolog, sep, sort, minlinks, lastpage } = attributes;
+	const blockProps = useBlockProps();
+	const postType = useSelect(
+		( select ) => select( 'core/editor' ).getCurrentPostType(),
+		[]
+	);
+
+	const previewAttributes = usePreviewAttributes( attributes );
+
 	return (
 		<div { ...blockProps }>
 			<InspectorControls>
@@ -89,14 +148,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						options={ STYLE_OPTIONS }
 						onChange={ ( value ) => setAttributes( { style: value } ) }
 					/>
-					{ style === 'rbli' && (
-						<TextControl
-							label={ __( 'Separator', 'linklist' ) }
-							value={ sep }
-							placeholder={ __( 'Use default', 'linklist' ) }
-							onChange={ ( value ) => setAttributes( { sep: value } ) }
-						/>
-					) }
+					<SeparatorControl style={ style } sep={ sep } setAttributes={ setAttributes } />
 					<SelectControl
 						label={ __( 'Sort order', 'linklist' ) }
 						value={ sort }
@@ -119,14 +171,7 @@ export default function Edit( { attributes, setAttributes } ) {
 							setAttributes( { minlinks: value === '' ? -1 : Number( value ) } )
 						}
 					/>
-					{ postType === 'page' && (
-						<SelectControl
-							label={ __( 'Last page only', 'linklist' ) }
-							value={ lastpage }
-							options={ LASTPAGE_OPTIONS }
-							onChange={ ( value ) => setAttributes( { lastpage: value } ) }
-						/>
-					) }
+					<LastPageControl postType={ postType } lastpage={ lastpage } setAttributes={ setAttributes } />
 				</PanelBody>
 			</InspectorControls>
 			<ServerSideRender block="linklist/linklist" attributes={ previewAttributes } />

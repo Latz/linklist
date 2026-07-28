@@ -86,23 +86,34 @@ if ( ! class_exists( 'LinkListAdmin' ) ) {
 		}
 
 		/**
+		 * Render a single form_table() row (label cell + content/description cell).
+		 *
+		 * @param array $row Row data with 'id', 'label', 'content', and optional 'desc'.
+		 * @return string The row's <tr>...</tr> HTML.
+		 */
+		private function render_form_row( $row ) {
+			$content = '<tr valign="top"><th scrope="row">';
+			if ( isset( $row['id'] ) && $row['id'] != '' ) {
+				$content .= '<label for="' . $row['id'] . '">' . $row['label'] . ':</label>';
+			} else {
+				$content .= $row['label'];
+			}
+			$content .= '</th><td>';
+			$content .= $row['content'];
+			if ( isset( $row['desc'] ) && $row['desc'] != '' ) {
+				$content .= '<br/><small>' . $row['desc'] . '</small>';
+			}
+			$content .= '</td></tr>';
+			return $content;
+		}
+
+		/**
 		 * Create a form table from an array of rows
 		 */
 		public function form_table( $rows ) {
 			$content = '<table class="form-table">';
 			foreach ( $rows as $row ) {
-				$content .= '<tr valign="top"><th scrope="row">';
-				if ( isset( $row['id'] ) && $row['id'] != '' ) {
-					$content .= '<label for="' . $row['id'] . '">' . $row['label'] . ':</label>';
-				} else {
-					$content .= $row['label'];
-				}
-				$content .= '</th><td>';
-				$content .= $row['content'];
-				if ( isset( $row['desc'] ) && $row['desc'] != '' ) {
-					$content .= '<br/><small>' . $row['desc'] . '</small>';
-				}
-				$content .= '</td></tr>';
+				$content .= $this->render_form_row( $row );
 			}
 			$content .= '</table>';
 			return $content;
@@ -168,6 +179,11 @@ if ( ! class_exists( 'LinkListAdmin' ) ) {
 			);
 		}
 
+	// Reads and sanitizes a single option key from $_POST, or '' if unset.
+	private function sanitize_setting_field( $option ) {
+		return isset( $_POST[ $option ] ) ? sanitize_text_field( wp_unslash( $_POST[ $option ] ) ) : '';
+	}
+
 	// Validates and saves a submitted settings form: checks capability/nonce,
 	// sanitizes each known option key from $_POST, converts the exceptions
 	// list to an array, and persists both the 'linklist' and
@@ -179,7 +195,7 @@ if ( ! class_exists( 'LinkListAdmin' ) ) {
 		check_admin_referer('linklist-config');
 
 		foreach($options as $option) {
-			$ll_options[$option] = (isset  ($_POST [$option])) ? sanitize_text_field( wp_unslash( $_POST [$option] ) ) : '';
+			$ll_options[$option] = $this->sanitize_setting_field($option);
 		}
 
 		// convert string list to array for easier access in main plugin

@@ -90,6 +90,20 @@ function linklist_render_block( $attributes ) {
 }
 
 /**
+ * Copies $attributes[$key] into $overrides[$key] when it's set and non-empty,
+ * leaving $overrides untouched otherwise (falling back to the stored option).
+ *
+ * @param array  $overrides  Overrides array, passed by reference.
+ * @param array  $attributes Block attributes.
+ * @param string $key        Attribute/override key to copy through.
+ */
+function linklist_add_passthrough_override( array &$overrides, array $attributes, $key ) {
+	if ( ! empty( $attributes[ $key ] ) ) {
+		$overrides[ $key ] = $attributes[ $key ];
+	}
+}
+
+/**
  * Builds the buildList() override array from block attributes: style/prolog/
  * sep pass through when non-empty, sort maps through
  * linklist_map_onoff_attribute(), and minlinks passes through when it's not
@@ -102,9 +116,7 @@ function linklist_build_overrides( $attributes ) {
 	$overrides = array();
 
 	foreach ( array( 'style', 'prolog', 'sep' ) as $key ) {
-		if ( ! empty( $attributes[ $key ] ) ) {
-			$overrides[ $key ] = $attributes[ $key ];
-		}
+		linklist_add_passthrough_override( $overrides, $attributes, $key );
 	}
 
 	$sort = linklist_map_onoff_attribute( $attributes, 'sort' );
